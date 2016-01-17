@@ -1,6 +1,3 @@
-/*
-Credits: PRoSToTeM@
-*/ 
 #include <amxmodx>
 #include <cstrike>
 #include <fun>
@@ -10,24 +7,10 @@ Credits: PRoSToTeM@
 #include <xs>
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "0.4"
+#define VERSION "0.5"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
-
-enum
-{
-	SHOWTEAMSELECT = 3,
-	PICKINGTEAM = 4
-};
-
-enum
-{
-	Menu_ChooseTeam = 1
-};
-
-const m_iJoiningState = 121;
-const m_iMenu = 205;
 
 new const PREFIX[] = "[DRM]";
 
@@ -97,7 +80,7 @@ public plugin_precache()
 	new const szRemoveEntities[][] = 
 	{
 		"func_bomb_target", "func_escapezone", "func_hostage_rescue", "func_vip_safetyzone", "info_vip_start",
-		"hostage_entity", "info_bomb_target", "func_buyzone","info_hostage_rescue", "monster_scientist"		 
+		"hostage_entity", "info_bomb_target", "func_buyzone","info_hostage_rescue", "monster_scientist"
 	};
 	g_tRemoveEntities = TrieCreate();
 	for(new i = 0; i < sizeof(szRemoveEntities); i++)
@@ -109,19 +92,19 @@ public plugin_precache()
 	g_iEntBuyZone = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "func_buyzone"));
 }
 
-public FakeMeta_Spawn_Pre(iEnt)
+public FakeMeta_Spawn_Pre(ent)
 {
-	if(!pev_valid(iEnt)) return FMRES_IGNORED;
+	if(!pev_valid(ent)) return FMRES_IGNORED;
 	
-	static szClassName[32];	pev(iEnt, pev_classname, szClassName, charsmax(szClassName));
+	static szClassName[32]; pev(ent, pev_classname, szClassName, charsmax(szClassName));
 	
 	if(TrieKeyExists(g_tRemoveEntities, szClassName))
 	{
-		if(iEnt == g_iEntBuyZone)
+		if(ent == g_iEntBuyZone)
 		{
 			return FMRES_IGNORED;
 		}
-		engfunc(EngFunc_RemoveEntity, iEnt);
+		engfunc(EngFunc_RemoveEntity, ent);
 		return FMRES_SUPERCEDE;
 	}
 	return FMRES_IGNORED;
@@ -138,13 +121,6 @@ public native_get_terrorist()
 public native_set_next_terrorist(id)
 {
 	g_iNextTerrorist = id;
-}
-public client_putinserver(id)
-{	
-	/*if(!is_user_bot(id) && !is_user_connected(g_iTerrorist))
-	{
-		set_pcvar_num(g_pSvRestart, 5);
-	}*/
 }
 public client_disconnect(id)
 {
@@ -226,21 +202,19 @@ TerroristCheck()
 {
 	if(!is_user_connected(g_iTerrorist))
 	{
-		for(new i = 1; i <= g_iMaxPlayers; i++)
-		{
-			if(is_user_alive(i) && cs_get_user_team(i) == CS_TEAM_T)
-			{
-				g_iTerrorist = i;
-				return;
-			}
-		}
-		//g_iTerrorist = 0;
+		new players[32], pnum; get_players(players, pnum, "ace", "TERRORIST");
+		g_iTerrorist = pnum ? players[0] : 0;
 	}	
 }
-//******** Messages ********//
+//******** Messages Credits: PRoSToTeM@ ********//
 public Message_Menu(const msg, const nDest, const nClient)
 {
-	#define MENU_TEAM 2
+	const MENU_TEAM = 2;
+	const SHOWTEAMSELECT = 3;
+	const Menu_ChooseTeam = 1;
+	const m_iJoiningState = 121;
+	const m_iMenu = 205;
+	
 	if (msg == g_msgShowMenu)
 	{
 		new szMsg[13];
@@ -283,7 +257,7 @@ public Ham_PlayerSpawn_Post(id)
 	
 	block_user_radio(id);
 	
-	strip_user_weapons(id);	
+	strip_user_weapons(id);
 	give_item(id, "weapon_knife");
 	
 	return HAM_IGNORED;
@@ -351,7 +325,7 @@ stock _get_players(players[32], bool:alive = false)
 }
 stock block_user_radio(id)
 {
-	#define m_iRadiosLeft 192
+	const m_iRadiosLeft = 192;
 	set_pdata_int(id, m_iRadiosLeft, 0);
 }
 stock bool:is_in_line_of_sight(Float:start[3], Float:end[3], bool:ignore_players = true)
