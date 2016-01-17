@@ -29,7 +29,7 @@ enum _:ModeData
 	m_Bhop,
 	m_Usp,
 	m_Hide//add min max players
-}
+};
 
 #define NONE_MODE -1
 
@@ -99,7 +99,7 @@ public plugin_natives()
 	register_native("dr_set_mode_bhop", "native_set_mode_bhop");
 	register_native("dr_get_mode_bhop", "native_get_mode_bhop");
 	register_native("dr_set_user_bhop", "native_set_user_bhop");
-	register_native("dr_get_user_bhop", "native_get_user_bhop");	
+	register_native("dr_get_user_bhop", "native_get_user_bhop");
 }
 public native_register_mode(Name[32], RoundDelay, CT_BlockWeapons, TT_BlockWeapons, CT_BlockButtons, TT_BlockButtons, Bhop, Usp, Hide)
 {
@@ -192,7 +192,7 @@ public Event_NewRound()
 	}
 	for(new id = 1; id <= g_iMaxPlayers; id++)
 	{
-		if(task_exists(id)) remove_task(id);
+		remove_task(id);
 	}
 }
 public Event_Restart()
@@ -230,9 +230,9 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 {
 	if(activator == 0 || activator > 32) return HAM_IGNORED;
 	
-	new iTeam = _:cs_get_user_team(activator);
+	new CsTeams:iTeam = cs_get_user_team(activator);
 	
-	if(g_iCurMode == NONE_MODE && iTeam == 1)
+	if(g_iCurMode == NONE_MODE && iTeam == CS_TEAM_T)
 	{
 		dr_set_mode(g_iModeButtons, 1, activator);
 		show_menu(activator, 0, "^n");
@@ -240,7 +240,7 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 		return HAM_IGNORED;
 	}
 	
-	if(iTeam == 1 && g_eCurModeInfo[m_TT_BlockButtons] || iTeam == 2 && g_eCurModeInfo[m_CT_BlockButtons])
+	if(iTeam == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockButtons] || iTeam == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockButtons])
 	{
 		return HAM_SUPERCEDE;
 	}
@@ -251,9 +251,9 @@ public Ham_TouchItems_Pre(ent, id)
 {
 	if(!(id && id <= g_iMaxPlayers) || g_iCurMode < 0) return HAM_IGNORED;
 	
-	new iTeam = _:cs_get_user_team(id);
+	new CsTeams:iTeam = cs_get_user_team(id);
 	
-	if(iTeam == 1 && g_eCurModeInfo[m_TT_BlockWeapon] || iTeam == 2 && g_eCurModeInfo[m_CT_BlockWeapon])
+	if(iTeam == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockWeapon] || iTeam == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockWeapon])
 	{
 		return HAM_SUPERCEDE;
 	}
@@ -262,7 +262,7 @@ public Ham_TouchItems_Pre(ent, id)
 }
 public Ham_PlayerSpawn_Post(id)
 {
-	if(!is_user_alive(id) || is_user_bot(id)) return HAM_IGNORED;
+	if(!is_user_alive(id)) return HAM_IGNORED;
 	
 	new CsTeams:iTeam = cs_get_user_team(id);
 	if(iTeam == CS_TEAM_CT && g_eCurModeInfo[m_Usp])
@@ -322,7 +322,7 @@ public Show_ModesMenu(id, iPage)
 		
 		if (iEnd < iMax)
 		{
-			iKey |= (1 << 8);		
+			iKey |= (1 << 8);
 			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n\r9.\w Next^n");
 			if(iPage)
 			{
