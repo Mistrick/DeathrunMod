@@ -43,7 +43,6 @@ public Ham_PlayerSpawn_Post(id)
 {
 	if(is_user_alive(id))
 	{
-		set_user_rendering(id);
 		if(g_iCurMode == g_iModeInvis && cs_get_user_team(id) == CS_TEAM_T)
 		{
 			set_user_rendering(id, kRenderFxGlowShell, 0, 0, 0, kRenderTransAlpha, 0);
