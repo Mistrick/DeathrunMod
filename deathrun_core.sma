@@ -135,6 +135,9 @@ public client_disconnect(id)
 			cs_set_user_team(g_iTerrorist, CS_TEAM_T);
 			engfunc(EngFunc_SetOrigin, g_iTerrorist, fOrigin);
 			
+			strip_user_weapons(g_iTerrorist);
+			give_item(g_iTerrorist, "weapon_knife");
+			
 			new szName[32]; get_user_name(g_iTerrorist, szName, charsmax(szName));
 			new szNameLeaver[32]; get_user_name(id, szNameLeaver, charsmax(szNameLeaver));
 			client_print_color(0, Red, "^4%s^3 %s^1 has left the server.^3 %s^1 became a terrorist.", PREFIX, szNameLeaver, szName);
