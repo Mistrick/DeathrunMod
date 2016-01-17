@@ -7,7 +7,7 @@
 #include <dhudmessage>
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.2"
+#define VERSION "0.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -127,9 +127,10 @@ public Task_ShowInfo()
 	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "All Players: %d/%d", g_iConnectedCount, g_iMaxPlayers);	
 
 	static szSpecInfo[1152];
-	for(new id = 1; id <= g_iMaxPlayers; id++)
+	new iAllPlayers[32], iAllNum; get_players(iAllPlayers, iAllNum, "ch");
+	for(new id, i; i < iAllNum; i++)
 	{
-		if(!g_bConnected[id]) continue;
+		id = iAllPlayers[i];
 		
 		if(g_iHealth[id] >= 255)
 		{
@@ -145,16 +146,20 @@ public Task_ShowInfo()
 		
 		if(!g_bAlive[id]) continue;
 		
+		new iDeadPlayers[32], iDeadNum; get_players(iDeadPlayers, iDeadNum, "bch");
+		
+		if(iDeadNum == 0) continue;
+		
 		new bool:bShowInfo[33];
 		get_user_name(id, szName, charsmax(szName));
 		iLen = formatex(szSpecInfo, charsmax(szSpecInfo), "Player: %s^nHealth: %dHP, Money: $%d, FPS: %d^n", szName, g_iHealth[id], g_iMoney[id], g_iPlayerFps[id]);
 		
-		for(new dead = 1; dead <= g_iMaxPlayers; dead++)
+		for(new dead, j; j < iDeadNum; j++)
 		{
-			if(g_bConnected[dead] && !g_bAlive[dead] && pev(dead, pev_iuser2) == id)
+			dead = iDeadPlayers[j];
+			if(pev(dead, pev_iuser2) == id)
 			{
-				get_user_name(dead, szName, charsmax(szName));
-				
+				get_user_name(dead, szName, charsmax(szName));				
 				iLen += formatex(szSpecInfo[iLen], charsmax(szSpecInfo) - iLen, "^n%s", szName);
 				
 				bShowInfo[dead] = true;
@@ -163,12 +168,13 @@ public Task_ShowInfo()
 		}
 		if(bShowInfo[id])
 		{
-			for(new i = 1; i <= g_iMaxPlayers; i++)
+			for(new player, j; j < iAllNum; j++)
 			{
-				if(g_bSpecList[i] && bShowInfo[i])
+				player = iAllPlayers[j];
+				if(g_bSpecList[player] && bShowInfo[player])
 				{
 					set_hudmessage(245, 245, 245, 0.70, 0.15, 0, _, UPDATEINTERVAL, _, _, 3);
-					ShowSyncHudMsg(i, g_iHudSpecList, szSpecInfo);
+					ShowSyncHudMsg(player, g_iHudSpecList, szSpecInfo);
 				}
 			}
 		}
@@ -178,9 +184,11 @@ public Task_ShowInfo()
 public Task_ShowSpeed()
 {
 	new Float:fSpeed, Float:fVelocity[3], iSpecmode;
-	for(new id = 1, target; id <= g_iMaxPlayers; id++)
+	new players[32], pnum; get_players(players, pnum, "ch");
+	for(new id, i, target; id < pnum; i++)
 	{
-		if(!g_bConnected[id] || !g_bSpeed[id]) continue;
+		id = players[i];
+		if(!g_bSpeed[id]) continue;
 		
 		iSpecmode = pev(id, pev_iuser1);
 		target = (iSpecmode == 1  || iSpecmode == 2 || iSpecmode == 4) ? pev(id, pev_iuser2) : id;
