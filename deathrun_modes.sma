@@ -236,7 +236,7 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 	{
 		dr_set_mode(g_iModeButtons, 1, activator);
 		show_menu(activator, 0, "^n");
-		client_print_color(0, DontChange, "^4%s^3 Terrorist^1 used button. Mode: ^4Buttons^1.", PREFIX);
+		client_print_color(0, DontChange, "^4%s^1 Terrorist used button. Mode: ^4Buttons^1.", PREFIX);
 		return HAM_IGNORED;
 	}
 	
