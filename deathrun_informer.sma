@@ -207,12 +207,7 @@ public dr_selected_mode(id, mode)
 }
 stock get_ct(&alive, &count)
 {
-	for(new id = 1; id <= g_iMaxPlayers; id++)
-	{
-		if(g_bConnected[id] && cs_get_user_team(id) == CS_TEAM_CT)
-		{
-			count++;
-			if(is_user_alive(id)) alive++;
-		}
-	}
+	new players[32];
+	get_players(players, count, "ceh", "CT");
+	get_players(players, alive, "aceh", "CT");
 }
