@@ -133,6 +133,7 @@ public client_disconnect(id)
 			new Float:fOrigin[3]; pev(id, pev_origin, fOrigin);
 			g_iTerrorist = iPlayers[random(iNum)];
 			cs_set_user_team(g_iTerrorist, CS_TEAM_T);
+			ExecuteHamB(Ham_CS_RoundRespawn, g_iTerrorist);
 			engfunc(EngFunc_SetOrigin, g_iTerrorist, fOrigin);
 			
 			new szName[32]; get_user_name(g_iTerrorist, szName, charsmax(szName));
