@@ -8,7 +8,7 @@
 #include <fun>
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.3"
+#define VERSION "0.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -264,6 +264,8 @@ public Ham_PlayerSpawn_Post(id)
 {
 	if(!is_user_alive(id)) return HAM_IGNORED;
 	
+	set_user_rendering(id);
+	
 	new CsTeams:iTeam = cs_get_user_team(id);
 	if(iTeam == CS_TEAM_CT && g_eCurModeInfo[m_Usp])
 	{
@@ -415,7 +417,7 @@ public Task_MenuTimer(id)
 			{
 				iMode = random(g_iModesNum);
 				ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
-			} while(g_eCurModeInfo[m_CurDelay]);
+			} while(g_eCurModeInfo[m_CurDelay] && !g_eCurModeInfo[m_Hide]);
 		}
 		else
 		{
@@ -444,7 +446,7 @@ bool:is_all_modes_blocked()
 	for(new i; i < g_iModesNum; i++)
 	{
 		ArrayGetArray(g_aModes, i, ModeInfo);
-		if(!ModeInfo[m_CurDelay]) return false;
+		if(!ModeInfo[m_CurDelay] && !ModeInfo[m_Hide]) return false;
 	}
 	return true;
 }
