@@ -389,8 +389,8 @@ public ModesMenu_Handler(id, key)
 			}
 			#endif
 			
-			ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);
-			
+			remove_task(id);
+			ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);			
 			client_print_color(0, Red, "^4%s^3 Terrorist^1 selected mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
 		}
 	}
@@ -401,7 +401,7 @@ public Task_MenuTimer(id)
 {
 	if(g_iCurMode != NONE_MODE || !is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_T)
 	{
-		if(task_exists(id)) remove_task(id);
+		remove_task(id);
 		show_menu(id, 0, "^n");
 		return;
 	}

@@ -122,6 +122,10 @@ public native_set_next_terrorist(id)
 {
 	g_iNextTerrorist = id;
 }
+public client_putinserver(id)
+{
+	block_user_spawn(id);
+}
 public client_disconnect(id)
 {
 	if(id == g_iTerrorist)
@@ -266,10 +270,7 @@ public Ham_PlayerSpawn_Post(id)
 public Ham_UseButton_Pre(ent, caller, activator, use_type)
 {
 	if(!is_user_alive(activator) || cs_get_user_team(activator) == CS_TEAM_T) return HAM_IGNORED;
-	
-	new solid = pev(ent, pev_solid);
-	set_pev(ent, pev_solid, SOLID_NOT);
-	
+		
 	new Float:fMin[3], Float:fMax[3], Float:fEntOrigin[3];
 	pev(ent, pev_absmin, fMin); pev(ent, pev_absmax, fMax);
 	xs_vec_add(fMin, fMax, fEntOrigin);
@@ -278,9 +279,7 @@ public Ham_UseButton_Pre(ent, caller, activator, use_type)
 	new iPlayerOrigin[3]; get_user_origin(activator, iPlayerOrigin, 1);
 	new Float:fPlayerOrigin[3]; IVecFVec(iPlayerOrigin, fPlayerOrigin);
 	
-	new bool:bCanUse = is_in_line_of_sight(fPlayerOrigin, fEntOrigin);
-	
-	set_pev(ent, pev_solid, solid);
+	new bool:bCanUse = is_in_line_of_sight(ent, fPlayerOrigin, fEntOrigin);
 	
 	return bCanUse ? HAM_IGNORED : HAM_SUPERCEDE;
 }
@@ -329,9 +328,14 @@ stock block_user_radio(id)
 	const m_iRadiosLeft = 192;
 	set_pdata_int(id, m_iRadiosLeft, 0);
 }
-stock bool:is_in_line_of_sight(Float:start[3], Float:end[3], bool:ignore_players = true)
+stock block_user_spawn(id)
 {
-	new trace = 0; engfunc(EngFunc_TraceLine, start, end, (ignore_players ? IGNORE_MONSTERS : DONT_IGNORE_MONSTERS), 0, trace);
+	const m_iSpawnCount = 365;
+	set_pdata_int(id, m_iSpawnCount, 1);
+}
+stock bool:is_in_line_of_sight(ent, Float:start[3], Float:end[3], bool:ignore_players = true)
+{
+	new trace = 0; engfunc(EngFunc_TraceLine, start, end, (ignore_players ? IGNORE_MONSTERS : DONT_IGNORE_MONSTERS), ent, trace);
 	new Float:fraction; get_tr2(trace, TR_flFraction, fraction);
 	return (fraction == 1.0) ? true : false;
 }
