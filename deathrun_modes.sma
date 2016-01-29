@@ -413,16 +413,17 @@ public Task_MenuTimer(id)
 		
 		if(!is_all_modes_blocked())
 		{
-			do
-			{
+			do{
 				iMode = random(g_iModesNum);
 				ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
-			} while(g_eCurModeInfo[m_CurDelay] && !g_eCurModeInfo[m_Hide]);
+			} while(g_eCurModeInfo[m_CurDelay] || g_eCurModeInfo[m_Hide]);
 		}
 		else
 		{
-			iMode = random(g_iModesNum);
-			ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
+			do{
+				iMode = random(g_iModesNum);
+				ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
+			} while(g_eCurModeInfo[m_Hide]);
 		}
 		
 		g_iCurMode = iMode;
