@@ -3,9 +3,12 @@
 #include <fakemeta>
 #include <fakemeta_util>
 #include <hamsandwich>
-#include <colorchat>
 #include <deathrun_modes>
 #include <fun>
+
+#if AMXX_VERSION_NUM < 183
+#include <colorchat>
+#endif
 
 #define PLUGIN "Deathrun: Modes"
 #define VERSION "0.4"
@@ -33,7 +36,7 @@ enum _:ModeData
 
 #define NONE_MODE -1
 
-new const PREFIX[] = "[DRM]";
+new const PREFIX[] = "^4[DRM]";
 
 new Array:g_aModes, g_iModesNum;
 
@@ -164,7 +167,7 @@ public Command_Bhop(id)
 	if(!g_eCurModeInfo[m_Bhop]) return PLUGIN_CONTINUE;
 	
 	g_bBhop[id] = !g_bBhop[id];
-	client_print_color(id, DontChange, "^4%s^1 Bhop is^3 %s^1.", PREFIX, g_bBhop[id] ? "enabled" : "disabled");
+	client_print_color(id, print_team_default, "%s^1 Bhop is^3 %s^1.", PREFIX, g_bBhop[id] ? "enabled" : "disabled");
 	
 	return PLUGIN_CONTINUE;
 }
@@ -236,7 +239,7 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 	{
 		dr_set_mode(g_iModeButtons, 1, activator);
 		show_menu(activator, 0, "^n");
-		client_print_color(0, DontChange, "^4%s^3 Terrorist^1 used button. Mode: ^4Buttons^1.", PREFIX);
+		client_print_color(0, print_team_default, "%s^3 Terrorist^1 used button. Mode: ^4Buttons^1.", PREFIX);
 		return HAM_IGNORED;
 	}
 	
@@ -391,7 +394,7 @@ public ModesMenu_Handler(id, key)
 			
 			remove_task(id);
 			ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);			
-			client_print_color(0, Red, "^4%s^3 Terrorist^1 selected mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
+			client_print_color(0, print_team_red, "%s^3 Terrorist^1 selected mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
 		}
 	}
 	
@@ -433,7 +436,7 @@ public Task_MenuTimer(id)
 		
 		ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);
 		
-		client_print_color(0, Red, "^4%s^3 Random^1 mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
+		client_print_color(0, print_team_red, "%s^3 Random^1 mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
 	}
 	else
 	{

@@ -3,8 +3,11 @@
 #include <fun>
 #include <fakemeta>
 #include <hamsandwich>
-#include <colorchat>
 #include <xs>
+
+#if AMXX_VERSION_NUM < 183
+#include <colorchat>
+#endif
 
 #define PLUGIN "Deathrun: Core"
 #define VERSION "0.5"
@@ -12,7 +15,7 @@
 
 #pragma semicolon 1
 
-new const PREFIX[] = "[DRM]";
+new const PREFIX[] = "^4[DRM]";
 
 new Trie:g_tRemoveEntities;
 new g_iEntBuyZone;
@@ -142,7 +145,11 @@ public client_disconnect(id)
 			
 			new szName[32]; get_user_name(g_iTerrorist, szName, charsmax(szName));
 			new szNameLeaver[32]; get_user_name(id, szNameLeaver, charsmax(szNameLeaver));
-			client_print_color(0, Red, "^4%s^3 %s^1 has left the server.^3 %s^1 became a terrorist.", PREFIX, szNameLeaver, szName);
+			client_print_color(0, print_team_red, "%s^3 %s^1 has left the server.^3 %s^1 became a terrorist.", PREFIX, szNameLeaver, szName);
+		}
+		else
+		{
+			set_pcvar_num(g_pSvRestart, 5);
 		}
 	}
 }
@@ -197,7 +204,7 @@ TeamBalance()
 		if(iPlayer != g_iTerrorist) cs_set_user_team(iPlayer, CS_TEAM_CT);
 	}
 	new szName[32]; get_user_name(g_iTerrorist, szName, charsmax(szName));
-	client_print_color(0, Red, "^4%s^3 %s^1 became a terrorist.", PREFIX, szName);
+	client_print_color(0, print_team_red, "%s^3 %s^1 became a terrorist.", PREFIX, szName);
 }
 public Event_RoundStart()
 {
