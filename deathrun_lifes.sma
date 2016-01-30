@@ -1,15 +1,18 @@
 #include <amxmodx>
 #include <hamsandwich>
+
+#if AMXX_VERSION_NUM < 183
 #include <colorchat>
+#endif
 
 #define PLUGIN "Deathrun: Lifes"
-#define VERSION "0.1"
+#define VERSION "0.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
-#define ADDLIFES 1
-#define ALIVECTTORESPAWN 3
+#define ADD_LIFES 1
+#define ALIVE_CT_TO_RESPAWN 3
 
 new const PREFIX[] = "[DL]";
 new g_iLifes[33], g_iMaxPlayers;
@@ -46,11 +49,11 @@ public Comman_Lifes(id)
 }
 public Ham_PlayerKilled_Post(victim, killer)
 {
-	if(killer && killer <= g_iMaxPlayers && killer != victim)
+	if(killer && killer <= g_iMaxPlayers && killer != victim && cs_get_user_team(victim) != cs_get_user_team(killer))
 	{
-		g_iLifes[killer] += ADDLIFES;
+		g_iLifes[killer] += ADD_LIFES;
 	}
-	if(g_iLifes[victim] && alive_ct() >= ALIVECTTORESPAWN && get_user_team(victim) == 2)
+	if(g_iLifes[victim] && alive_ct() >= ALIVE_CT_TO_RESPAWN && cs_get_user_team(victim) == CS_TEAM_CT)
 	{
 		Show_LifeMenu(victim);
 	}
@@ -71,14 +74,14 @@ public LifeMenu_Handler(id, key)
 	{
 		case 0:
 		{
-			if(g_iLifes[id] && alive_ct() >= ALIVECTTORESPAWN && get_user_team(id) == 2)
+			if(!is_user_alive(id) && g_iLifes[id] && alive_ct() >= ALIVE_CT_TO_RESPAWN && cs_get_user_team(id) == CS_TEAM_CT)
 			{
 				g_iLifes[id]--;
 				ExecuteHamB(Ham_CS_RoundRespawn, id);
 			}
 			else
 			{
-				client_print_color(id, DontChange, "^4%s^1 You can't respawn.", PREFIX);
+				client_print_color(id, print_team_default, "^4%s^1 You can't respawn.", PREFIX);
 			}
 		}
 	}
@@ -86,11 +89,6 @@ public LifeMenu_Handler(id, key)
 }
 alive_ct()
 {
-	new count;
-	for(new i = 1; i <= g_iMaxPlayers; i++)
-	{
-		if(is_user_alive(i) && get_user_team(i) == 2)
-			count++;
-	}
-	return count++;
+	new players[32], pnum; get_players(players, pnum, "ache", "CT");
+	return pnum;
 }
