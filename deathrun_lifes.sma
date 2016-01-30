@@ -1,4 +1,5 @@
 #include <amxmodx>
+#include <cstrike>
 #include <hamsandwich>
 
 #if AMXX_VERSION_NUM < 183
