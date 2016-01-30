@@ -2,22 +2,25 @@
 #include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
-#include <colorchat>
 #include <deathrun_modes>
+
+#if AMXX_VERSION_NUM < 183
+#include <colorchat>
 #include <dhudmessage>
+#endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.3"
+#define VERSION "0.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
-#define UPDATEINTERVAL 1.0
+#define UPDATE_INTERVAL 1.0
 
 new const PREFIX[] = "[DRI]";
 
 new g_szCurMode[32], g_iConnectedCount, g_iMaxPlayers, g_iHudInformer, g_iHudSpecList, g_iHudSpeed;
-new bool:g_bConnected[33], bool:g_bAlive[33], bool:g_bInformer[33], bool:g_bSpeed[33], bool:g_bSpecList[33];
+new bool:g_bAlive[33], bool:g_bInformer[33], bool:g_bSpeed[33], bool:g_bSpecList[33];
 new g_iHealth[33], g_iMoney[33], g_iFrames[33], g_iPlayerFps[33];
 
 public plugin_init()
@@ -43,12 +46,11 @@ public plugin_init()
 	g_iMaxPlayers = get_maxplayers();
 	
 	set_task(1.0, "Task_FramesCount", .flags = "b");
-	set_task(UPDATEINTERVAL, "Task_ShowInfo", .flags = "b");
+	set_task(UPDATE_INTERVAL, "Task_ShowInfo", .flags = "b");
 	set_task(0.1, "Task_ShowSpeed", .flags = "b");
 }
 public client_putinserver(id)
 {
-	g_bConnected[id] = true;
 	g_bInformer[id] = true;
 	g_bSpecList[id] = true;
 	g_bSpeed[id] = true;
@@ -57,24 +59,23 @@ public client_putinserver(id)
 public client_disconnect(id)
 {
 	g_bAlive[id] = false;
-	g_bConnected[id] = false;
 	g_iConnectedCount--;
 }
 //***** Commands *****//
 public Command_Informer(id)
 {
 	g_bInformer[id] = !g_bInformer[id];
-	client_print_color(id, DontChange, "^4%s^1 Informer is^3 %s^1.", PREFIX, g_bInformer[id] ? "enabled" : "disabled");
+	client_print_color(id, print_team_default, "^4%s^1 Informer is^3 %s^1.", PREFIX, g_bInformer[id] ? "enabled" : "disabled");
 }
 public Command_SpecList(id)
 {
 	g_bSpecList[id] = !g_bSpecList[id];
-	client_print_color(id, DontChange, "^4%s^1 Speclist is^3 %s^1.", PREFIX, g_bSpecList[id] ? "enabled" : "disabled");
+	client_print_color(id, print_team_default, "^4%s^1 Speclist is^3 %s^1.", PREFIX, g_bSpecList[id] ? "enabled" : "disabled");
 }
 public Command_Speed(id)
 {
 	g_bSpeed[id] = !g_bSpeed[id];
-	client_print_color(id, DontChange, "^4%s^1 Speedometer is^3 %s^1.", PREFIX, g_bSpeed[id] ? "enabled" : "disabled");
+	client_print_color(id, print_team_default, "^4%s^1 Speedometer is^3 %s^1.", PREFIX, g_bSpeed[id] ? "enabled" : "disabled");
 }
 //***** Events *****//
 public Event_RoundStart()
@@ -134,12 +135,12 @@ public Task_ShowInfo()
 		
 		if(g_iHealth[id] >= 255)
 		{
-			set_dhudmessage(55, 245, 55, 0.02, 0.90, 0, _, UPDATEINTERVAL - 0.05, _, _, false);
+			set_dhudmessage(55, 245, 55, 0.02, 0.90, 0, _, UPDATE_INTERVAL - 0.05, _, _, false);
 			show_dhudmessage(id, "Health: %d", g_iHealth[id]);
 		}
 		if(g_bInformer[id])
 		{
-			set_hudmessage(55, 245, 55, 0.02, 0.18, 0, _, UPDATEINTERVAL, _, _, 3);
+			set_hudmessage(55, 245, 55, 0.02, 0.18, 0, _, UPDATE_INTERVAL, _, _, 3);
 			ShowSyncHudMsg(id, g_iHudInformer, szInformer);
 		}
 
@@ -173,7 +174,7 @@ public Task_ShowInfo()
 				player = iAllPlayers[j];
 				if(g_bSpecList[player] && bShowInfo[player])
 				{
-					set_hudmessage(245, 245, 245, 0.70, 0.15, 0, _, UPDATEINTERVAL, _, _, 3);
+					set_hudmessage(245, 245, 245, 0.70, 0.15, 0, _, UPDATE_INTERVAL, _, _, 3);
 					ShowSyncHudMsg(player, g_iHudSpecList, szSpecInfo);
 				}
 			}
