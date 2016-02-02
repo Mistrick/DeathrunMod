@@ -1,12 +1,14 @@
 #include <amxmodx>
 #include <cstrike>
 #include <fun>
+#include <engine>
 #include <fakemeta>
 #include <hamsandwich>
 #include <deathrun_modes>
+#include <xs>
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.1"
+#define VERSION "0.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -15,24 +17,29 @@
 
 #define TASK_TURNCHANGER 100
 
-const DUELIST_CT = 0;
-const DUELIST_T = 1;
+new const SPAWNS_DIR[] = "deathrun_duel";
 
 const XO_CBASEPLAYERWEAPON = 4;
-const XO_CBASEPLAYER = 5;
 const m_pPlayer = 41;
-const m_iId = 43;
-const m_flNextPrimaryAttack = 46;
-const m_iClip = 51;
-const m_pActiveItem = 373;
+
+enum
+{
+	DUELIST_CT = 0,
+	DUELIST_T
+}
 
 new g_iModeDuel;
 new g_bDuelStarted;
-
 new g_iDuelPlayers[2];
 new g_iDuelWeapon[2];
 new g_iTimer;
 new g_iCurTurn;
+
+new Float:g_fDuelSpawnOrigins[2][3];
+new Float:g_fDuelSpawnAngles[2][3];
+new g_bShowSpawns;
+new g_bLoadedSpawns;
+new g_szSpawnsFile[128];
 
 enum 
 {
@@ -61,6 +68,7 @@ public plugin_init()
 	register_plugin(PLUGIN, VERSION, AUTHOR);
 	register_clcmd("say /dd", "Command_Duel");
 	register_clcmd("say /duel", "Command_Duel");
+	register_clcmd("duel_spawns", "Command_DuelSpawn", ADMIN_CFG);
 	
 	for(new i; i < sizeof(g_eDuelWeaponWithTurn); i++)
 	{
@@ -83,6 +91,167 @@ public plugin_init()
 		.Hide = 1
 	);
 }
+public plugin_cfg()
+{
+	LoadSpawns();
+}
+LoadSpawns()
+{
+	new szConfigDir[128]; get_localinfo("amxx_configsdir", szConfigDir, charsmax(szConfigDir));
+	new szDir[128]; formatex(szDir, charsmax(szDir), "%s/%s", szConfigDir, SPAWNS_DIR);
+	
+	if(dir_exists(szDir))
+	{
+		new szMap[32]; get_mapname(szMap, charsmax(szMap));
+		formatex(g_szSpawnsFile, charsmax(g_szSpawnsFile), "%s/%s.ini", szDir, szMap);
+		
+		if(file_exists(g_szSpawnsFile))
+		{
+			new f = fopen(g_szSpawnsFile, "rt");
+			
+			if(f)
+			{
+				new szText[128], szTeam[3], szOrigins[3][16];
+				while(!feof(f))
+				{
+					fgets(f, szText, charsmax(szText));
+					parse(szText, szTeam, charsmax(szTeam), szOrigins[0], charsmax(szOrigins[]), szOrigins[1], charsmax(szOrigins[]), szOrigins[2], charsmax(szOrigins[]));
+					new team = szTeam[0] == 'C' ? 0 : 1;
+					g_fDuelSpawnOrigins[team][0] = str_to_float(szOrigins[0]);
+					g_fDuelSpawnOrigins[team][1] = str_to_float(szOrigins[1]);
+					g_fDuelSpawnOrigins[team][2] = str_to_float(szOrigins[2]);
+				}
+				fclose(f);
+				if(g_fDuelSpawnOrigins[DUELIST_CT][0] != 0.0 && g_fDuelSpawnOrigins[DUELIST_T][0] != 0.0)
+				{
+					g_bLoadedSpawns = true;
+					GetSpawnAngles();
+				}
+			}
+		}
+		else
+		{
+			FindSpawns();
+		}
+	}
+	else
+	{
+		mkdir(szDir);
+		FindSpawns();
+	}
+}
+FindSpawns()
+{
+	new first_ent = find_ent_by_class(-1, "info_player_start");
+	pev(first_ent, pev_origin, g_fDuelSpawnOrigins[DUELIST_CT]);
+	new ent = first_ent, bFind;
+	while((ent = find_ent_by_class(ent, "info_player_start")))
+	{
+		if(get_entity_distance(ent, first_ent) > 150.0)
+		{
+			bFind = true;
+			pev(ent, pev_origin, g_fDuelSpawnOrigins[DUELIST_T]);
+			break;
+		}
+	}
+	if(bFind)
+	{
+		g_bLoadedSpawns = true;
+		GetSpawnAngles();
+	}
+}
+GetSpawnAngles()
+{
+	new Float:fVector[3]; xs_vec_sub(g_fDuelSpawnOrigins[DUELIST_T], g_fDuelSpawnOrigins[DUELIST_CT], fVector);
+	xs_vec_normalize(fVector, fVector);
+	vector_to_angle(fVector, g_fDuelSpawnAngles[DUELIST_CT]);
+	xs_vec_mul_scalar(fVector, -1.0, fVector);
+	vector_to_angle(fVector, g_fDuelSpawnAngles[DUELIST_T]);
+}
+public client_disconnect(id)
+{
+	if(g_bDuelStarted && (id == g_iDuelPlayers[DUELIST_CT] || id == g_iDuelPlayers[DUELIST_T]))
+	{
+		g_bDuelStarted = false;
+		g_iDuelPlayers[DUELIST_CT] = 0;
+		g_iDuelPlayers[DUELIST_T] = 0;
+		remove_task(TASK_TURNCHANGER);
+	}
+}
+public Command_DuelSpawn(id, flag)
+{
+	if(~get_user_flags(id) & flag) return PLUGIN_HANDLED;
+	
+	new menu = menu_create("Duel Spawn Control", "DuelSpawnControl_Handler");
+	menu_additem(menu, "Set \rCT\w spawn");
+	menu_additem(menu, "Set \rT\w spawn");
+	menu_additem(menu, "Show spawns");
+	menu_additem(menu, "Save spawns^n");
+	menu_additem(menu, "Noclip");
+	menu_display(id, menu);
+	
+	return PLUGIN_HANDLED;
+}
+public DuelSpawnControl_Handler(id, menu, item)
+{
+	if(item == MENU_EXIT)
+	{
+		menu_destroy(menu);
+		return PLUGIN_HANDLED;
+	}
+	
+	switch(item)
+	{
+		case 0, 1:
+		{
+			pev(id, pev_origin, g_fDuelSpawnOrigins[item]);
+			if(g_bShowSpawns)
+			{
+				UpdateSpawnEnt(item);
+			}
+		}
+		case 2:
+		{
+			if(!g_bShowSpawns)
+			{
+				g_bShowSpawns = true;
+				CreateSpawnEnt();
+			}
+			else
+			{
+				g_bShowSpawns = false;
+				RemoveSpawnEnt();
+			}
+		}
+		case 3:
+		{
+			SaveSpawns();
+		}
+		case 4:
+		{
+			set_user_noclip(id, !get_user_noclip(id));
+		}
+	}
+	
+	menu_destroy(menu);
+	return PLUGIN_HANDLED;
+}
+CreateSpawnEnt()
+{
+	
+}
+RemoveSpawnEnt()
+{
+	
+}
+UpdateSpawnEnt(type)
+{
+	
+}
+SaveSpawns()
+{
+	
+}
 public Command_Duel(id)
 {
 	if(g_bDuelStarted || !is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_CT) return PLUGIN_HANDLED;
@@ -97,7 +266,7 @@ public Command_Duel(id)
 	
 	g_iDuelPlayers[DUELIST_T] = players[0];
 	
-	new menu = menu_create("Choose duel type:", "DuelType_Handler");
+	new menu = menu_create("Choose duel type:", "DuelType_Handler");//make perm menu
 	for(new i; i < sizeof(g_eDuelMenuItems); i++)
 	{
 		menu_additem(menu, g_eDuelMenuItems[i]);
@@ -130,30 +299,43 @@ DuelStartForward(type)
 	{
 		case DUELTYPE_KNIFE:
 		{
-			PrepareWeaponDuel();
+			PreparePlayerForWeaponDuel(DUELIST_CT);
+			PreparePlayerForWeaponDuel(DUELIST_T);
 			give_item(g_iDuelPlayers[DUELIST_CT], "weapon_knife");
 			give_item(g_iDuelPlayers[DUELIST_T], "weapon_knife");
 		}
 		case DUELTYPE_DEAGLE:
 		{
-			PrepareWeaponDuel();
+			PreparePlayerForWeaponDuel(DUELIST_CT);
+			PreparePlayerForWeaponDuel(DUELIST_T);
 			StartTurnDuel(TURNDUEL_DEAGLE);
 		}
 		case DUELTYPE_AWP:
 		{
-			PrepareWeaponDuel();
+			PreparePlayerForWeaponDuel(DUELIST_CT);
+			PreparePlayerForWeaponDuel(DUELIST_T);
 			StartTurnDuel(TURNDUEL_AWP);
 		}
 	}
+	if(g_bLoadedSpawns)
+	{
+		MovePlayerToSpawn(DUELIST_CT);
+		MovePlayerToSpawn(DUELIST_T);
+	}
 }
-PrepareWeaponDuel()
+PreparePlayerForWeaponDuel(player)
 {
-	strip_user_weapons(g_iDuelPlayers[DUELIST_CT]);
-	strip_user_weapons(g_iDuelPlayers[DUELIST_T]);
-	set_user_health(g_iDuelPlayers[DUELIST_CT], 100);
-	set_user_health(g_iDuelPlayers[DUELIST_T], 100);
-	set_user_gravity(g_iDuelPlayers[DUELIST_CT], 1.0);
-	set_user_gravity(g_iDuelPlayers[DUELIST_T], 1.0);
+	strip_user_weapons(g_iDuelPlayers[player]);
+	set_user_health(g_iDuelPlayers[player], 100);
+	set_user_gravity(g_iDuelPlayers[player], 1.0);
+	set_user_rendering(g_iDuelPlayers[player]);
+}
+MovePlayerToSpawn(player)
+{
+	set_pev(g_iDuelPlayers[player], pev_origin, g_fDuelSpawnOrigins[player]);
+	set_pev(g_iDuelPlayers[player], pev_v_angle, g_fDuelSpawnAngles[player]);
+	set_pev(g_iDuelPlayers[player], pev_angles, g_fDuelSpawnAngles[player]);
+	set_pev(g_iDuelPlayers[player], pev_fixangle, 1);
 }
 StartTurnDuel(type)
 {
@@ -163,7 +345,7 @@ StartTurnDuel(type)
 	cs_set_weapon_ammo(g_iDuelWeapon[DUELIST_T], 0);
 	
 	g_iTimer = FIRE_TIME;
-	g_iCurTurn = 0;
+	g_iCurTurn = DUELIST_CT;
 	Task_ChangeTurn();
 }
 public Task_ChangeTurn()
@@ -191,6 +373,8 @@ public Ham_WeaponPrimaryAttack_Post(weapon)
 		g_iTimer = FIRE_TIME;
 		g_iCurTurn ^= 1;
 		cs_set_weapon_ammo(g_iDuelWeapon[g_iCurTurn], 1);
+		remove_task(TASK_TURNCHANGER);
+		Task_ChangeTurn();
 	}
 	
 	return HAM_IGNORED;
