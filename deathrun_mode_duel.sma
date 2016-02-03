@@ -8,7 +8,7 @@
 #include <xs>
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.2"
+#define VERSION "0.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -40,6 +40,7 @@ new Float:g_fDuelSpawnAngles[2][3];
 new g_bShowSpawns;
 new g_bLoadedSpawns;
 new g_szSpawnsFile[128];
+new g_bSetSpawn[2];
 
 enum 
 {
@@ -100,11 +101,11 @@ LoadSpawns()
 	new szConfigDir[128]; get_localinfo("amxx_configsdir", szConfigDir, charsmax(szConfigDir));
 	new szDir[128]; formatex(szDir, charsmax(szDir), "%s/%s", szConfigDir, SPAWNS_DIR);
 	
+	new szMap[32]; get_mapname(szMap, charsmax(szMap));
+	formatex(g_szSpawnsFile, charsmax(g_szSpawnsFile), "%s/%s.ini", szDir, szMap);
+	
 	if(dir_exists(szDir))
 	{
-		new szMap[32]; get_mapname(szMap, charsmax(szMap));
-		formatex(g_szSpawnsFile, charsmax(g_szSpawnsFile), "%s/%s.ini", szDir, szMap);
-		
 		if(file_exists(g_szSpawnsFile))
 		{
 			new f = fopen(g_szSpawnsFile, "rt");
@@ -116,13 +117,14 @@ LoadSpawns()
 				{
 					fgets(f, szText, charsmax(szText));
 					parse(szText, szTeam, charsmax(szTeam), szOrigins[0], charsmax(szOrigins[]), szOrigins[1], charsmax(szOrigins[]), szOrigins[2], charsmax(szOrigins[]));
-					new team = szTeam[0] == 'C' ? 0 : 1;
+					new team = (szTeam[0] == 'C' ? 0 : 1);
 					g_fDuelSpawnOrigins[team][0] = str_to_float(szOrigins[0]);
 					g_fDuelSpawnOrigins[team][1] = str_to_float(szOrigins[1]);
 					g_fDuelSpawnOrigins[team][2] = str_to_float(szOrigins[2]);
+					g_bSetSpawn[team] = true;
 				}
 				fclose(f);
-				if(g_fDuelSpawnOrigins[DUELIST_CT][0] != 0.0 && g_fDuelSpawnOrigins[DUELIST_T][0] != 0.0)
+				if(g_bSetSpawn[DUELIST_CT] && g_bSetSpawn[DUELIST_T])
 				{
 					g_bLoadedSpawns = true;
 					GetSpawnAngles();
@@ -182,6 +184,12 @@ public Command_DuelSpawn(id, flag)
 {
 	if(~get_user_flags(id) & flag) return PLUGIN_HANDLED;
 	
+	Show_DuelSpawnControlMenu(id);
+	
+	return PLUGIN_HANDLED;
+}
+public Show_DuelSpawnControlMenu(id)
+{
 	new menu = menu_create("Duel Spawn Control", "DuelSpawnControl_Handler");
 	menu_additem(menu, "Set \rCT\w spawn");
 	menu_additem(menu, "Set \rT\w spawn");
@@ -189,8 +197,6 @@ public Command_DuelSpawn(id, flag)
 	menu_additem(menu, "Save spawns^n");
 	menu_additem(menu, "Noclip");
 	menu_display(id, menu);
-	
-	return PLUGIN_HANDLED;
 }
 public DuelSpawnControl_Handler(id, menu, item)
 {
@@ -204,10 +210,11 @@ public DuelSpawnControl_Handler(id, menu, item)
 	{
 		case 0, 1:
 		{
+			g_bSetSpawn[item] = true;
 			pev(id, pev_origin, g_fDuelSpawnOrigins[item]);
 			if(g_bShowSpawns)
 			{
-				UpdateSpawnEnt(item);
+				UpdateSpawnEnt();
 			}
 		}
 		case 2:
@@ -215,7 +222,8 @@ public DuelSpawnControl_Handler(id, menu, item)
 			if(!g_bShowSpawns)
 			{
 				g_bShowSpawns = true;
-				CreateSpawnEnt();
+				CreateSpawnEnt(DUELIST_CT);
+				CreateSpawnEnt(DUELIST_T);
 			}
 			else
 			{
@@ -225,7 +233,7 @@ public DuelSpawnControl_Handler(id, menu, item)
 		}
 		case 3:
 		{
-			SaveSpawns();
+			SaveSpawns(id);
 		}
 		case 4:
 		{
@@ -233,24 +241,67 @@ public DuelSpawnControl_Handler(id, menu, item)
 		}
 	}
 	
+	Show_DuelSpawnControlMenu(id);
+	
 	menu_destroy(menu);
 	return PLUGIN_HANDLED;
 }
-CreateSpawnEnt()
+CreateSpawnEnt(type)
 {
+	static szModels[][] = {"models/player/urban/urban.mdl", "models/player/arctic/arctic.mdl"};
+	new ent = create_entity("info_target");
+	DispatchSpawn(ent);
 	
+	entity_set_model(ent, szModels[type]);
+	entity_set_string(ent, EV_SZ_classname, "duel_spawn_ent");
+	entity_set_int(ent, EV_INT_movetype, MOVETYPE_NOCLIP);
+	entity_set_int(ent, EV_INT_solid, SOLID_NOT);
+	entity_set_int(ent, EV_INT_iuser1, type);
+	entity_set_int(ent, EV_INT_sequence, 1);
+	
+	entity_set_vector(ent, EV_VEC_origin, g_fDuelSpawnOrigins[type]);
+	entity_set_vector(ent, EV_VEC_angles, g_fDuelSpawnAngles[type]);
 }
 RemoveSpawnEnt()
 {
-	
+	new ent = -1;
+	while((ent = find_ent_by_class(ent, "duel_spawn_ent")))
+	{
+		remove_entity(ent);
+	}
 }
-UpdateSpawnEnt(type)
+UpdateSpawnEnt()
 {
-	
+	GetSpawnAngles();
+	new ent = -1;
+	while((ent = find_ent_by_class(ent, "duel_spawn_ent")))
+	{
+		new type = entity_get_int(ent, EV_INT_iuser1);
+		entity_set_vector(ent, EV_VEC_origin, g_fDuelSpawnOrigins[type]);
+		entity_set_vector(ent, EV_VEC_angles, g_fDuelSpawnAngles[type]);
+	}
 }
-SaveSpawns()
+SaveSpawns(id)
 {
-	
+	if(!g_bSetSpawn[DUELIST_CT] || !g_bSetSpawn[DUELIST_T])
+	{
+		client_print(id, print_chat, "[DUEL] You must set two spawns.");
+		return;
+	}
+	if(file_exists(g_szSpawnsFile))
+	{
+		delete_file(g_szSpawnsFile);
+	}
+	new file = fopen(g_szSpawnsFile, "wt");
+	if(file)
+	{
+		fprintf(file, "CT %f %f %f^n", g_fDuelSpawnOrigins[DUELIST_CT][0], g_fDuelSpawnOrigins[DUELIST_CT][1], g_fDuelSpawnOrigins[DUELIST_CT][2]);
+		fprintf(file, "T %f %f %f^n", g_fDuelSpawnOrigins[DUELIST_T][0], g_fDuelSpawnOrigins[DUELIST_T][1], g_fDuelSpawnOrigins[DUELIST_T][2]);
+		fclose(file);
+		g_bLoadedSpawns = true;
+		GetSpawnAngles();
+		client_print(id, print_chat, "[DUEL] Spawns saved.");
+	}
 }
 public Command_Duel(id)
 {
