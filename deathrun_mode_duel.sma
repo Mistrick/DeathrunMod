@@ -7,15 +7,24 @@
 #include <deathrun_modes>
 #include <xs>
 
+#if AMXX_VERSION_NUM < 183
+#include <colorchat>
+#endif
+
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.3"
+#define VERSION "0.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
 #define FIRE_TIME 5
+#define DUEL_TIME 60
 
-#define TASK_TURNCHANGER 100
+enum (+=100)
+{
+	TASK_TURNCHANGER = 100,
+	TASK_DUELTIMER
+}
 
 new const SPAWNS_DIR[] = "deathrun_duel";
 
@@ -32,7 +41,8 @@ new g_iModeDuel;
 new g_bDuelStarted;
 new g_iDuelPlayers[2];
 new g_iDuelWeapon[2];
-new g_iTimer;
+new g_iDuelTurnTimer;
+new g_iDuelTimer;
 new g_iCurTurn;
 
 new Float:g_fDuelSpawnOrigins[2][3];
@@ -78,6 +88,8 @@ public plugin_init()
 	
 	RegisterHam(Ham_TakeDamage, "player", "Ham_PlayerTakeDamage_Pre", false);
 	RegisterHam(Ham_Killed, "player", "Ham_PlayerKilled_Post", true);
+	register_touch("trigger_teleport", "player", "Engine_DuelTouch");
+	register_touch("trigger_push", "player", "Engine_DuelTouch");
 	
 	g_iModeDuel = dr_register_mode
 	(
@@ -285,7 +297,7 @@ SaveSpawns(id)
 {
 	if(!g_bSetSpawn[DUELIST_CT] || !g_bSetSpawn[DUELIST_T])
 	{
-		client_print(id, print_chat, "[DUEL] You must set two spawns.");
+		client_print_color(id, print_team_default, "^4[Duel]^1 You must set two spawns.");
 		return;
 	}
 	if(file_exists(g_szSpawnsFile))
@@ -300,7 +312,7 @@ SaveSpawns(id)
 		fclose(file);
 		g_bLoadedSpawns = true;
 		GetSpawnAngles();
-		client_print(id, print_chat, "[DUEL] Spawns saved.");
+		client_print_color(id, print_team_default, "^4[Duel]^1 Spawns saved.");
 	}
 }
 public Command_Duel(id)
@@ -345,6 +357,7 @@ public DuelType_Handler(id, menu, item)
 DuelStartForward(type)
 {
 	g_bDuelStarted = true;
+	StartDuelTimer();
 	
 	switch(type)
 	{
@@ -374,6 +387,31 @@ DuelStartForward(type)
 		MovePlayerToSpawn(DUELIST_T);
 	}
 }
+StartDuelTimer()
+{
+	g_iDuelTimer = DUEL_TIME + 1;
+	Task_DuelTimer();
+}
+public Task_DuelTimer()
+{
+	if(--g_iDuelTimer <= 0)
+	{
+		g_bDuelStarted = false;
+		
+		ExecuteHamB(Ham_Killed, g_iDuelPlayers[DUELIST_CT], 0, 0);
+		ExecuteHamB(Ham_Killed, g_iDuelPlayers[DUELIST_T], 0, 0);
+
+		g_iDuelPlayers[DUELIST_CT] = 0;
+		g_iDuelPlayers[DUELIST_T] = 0;
+		
+		remove_task(TASK_TURNCHANGER);
+		client_print_color(0, print_team_default, "^4[Duel]^1 Duel time is over.");
+	}
+	else
+	{
+		set_task(1.0, "Task_DuelTimer", TASK_DUELTIMER);
+	}
+}
 PreparePlayerForWeaponDuel(player)
 {
 	strip_user_weapons(g_iDuelPlayers[player]);
@@ -395,22 +433,22 @@ StartTurnDuel(type)
 	cs_set_weapon_ammo(g_iDuelWeapon[DUELIST_CT], 1);
 	cs_set_weapon_ammo(g_iDuelWeapon[DUELIST_T], 0);
 	
-	g_iTimer = FIRE_TIME;
+	g_iDuelTurnTimer = FIRE_TIME;
 	g_iCurTurn = DUELIST_CT;
 	Task_ChangeTurn();
 }
 public Task_ChangeTurn()
 {
-	if(g_iTimer > 0)
+	if(g_iDuelTurnTimer > 0)
 	{
-		client_print(g_iDuelPlayers[g_iCurTurn], print_center, "You have %d seconds.", g_iTimer);
+		client_print(g_iDuelPlayers[g_iCurTurn], print_center, "You have %d seconds.", g_iDuelTurnTimer);
 	}
 	else
 	{
 		ExecuteHamB(Ham_Weapon_PrimaryAttack, g_iDuelWeapon[g_iCurTurn]);
 	}
 
-	g_iTimer--;
+	g_iDuelTurnTimer--;
 	set_task(1.0, "Task_ChangeTurn", TASK_TURNCHANGER);
 }
 public Ham_WeaponPrimaryAttack_Post(weapon)
@@ -421,7 +459,7 @@ public Ham_WeaponPrimaryAttack_Post(weapon)
 	
 	if(player == g_iDuelPlayers[g_iCurTurn])
 	{
-		g_iTimer = FIRE_TIME;
+		g_iDuelTurnTimer = FIRE_TIME;
 		g_iCurTurn ^= 1;
 		cs_set_weapon_ammo(g_iDuelWeapon[g_iCurTurn], 1);
 		remove_task(TASK_TURNCHANGER);
@@ -441,11 +479,16 @@ public Ham_PlayerTakeDamage_Pre(victim, idinflictor, attacker, Float:damage, dam
 	
 	return HAM_IGNORED;
 }
+public Engine_DuelTouch(ent, toucher)
+{
+	return g_bDuelStarted ? PLUGIN_HANDLED : PLUGIN_CONTINUE;
+}
 public Ham_PlayerKilled_Post(victim, killer)
 {
 	if(g_bDuelStarted && (victim == g_iDuelPlayers[DUELIST_CT] || victim == g_iDuelPlayers[DUELIST_T]))
 	{
-		client_print(0, print_chat, "DUEL: over, died %d, winner %d", victim, killer);
+		new szName[32]; get_user_name(killer, szName, charsmax(szName));
+		client_print_color(0, killer, "^4[Duel]^1 Duel winner is^3 %s^1.", szName);
 		
 		g_bDuelStarted = false;
 		g_iDuelPlayers[DUELIST_CT] = 0;
