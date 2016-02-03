@@ -190,6 +190,7 @@ public client_disconnect(id)
 		g_iDuelPlayers[DUELIST_CT] = 0;
 		g_iDuelPlayers[DUELIST_T] = 0;
 		remove_task(TASK_TURNCHANGER);
+		remove_task(TASK_DUELTIMER);
 	}
 }
 public Command_DuelSpawn(id, flag)
