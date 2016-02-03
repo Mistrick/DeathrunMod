@@ -496,5 +496,6 @@ public Ham_PlayerKilled_Post(victim, killer)
 		g_iDuelPlayers[DUELIST_T] = 0;
 		
 		remove_task(TASK_TURNCHANGER);
+		remove_task(TASK_DUELTIMER);
 	}
 }
