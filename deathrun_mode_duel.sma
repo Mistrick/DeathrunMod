@@ -12,13 +12,14 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.4"
+#define VERSION "0.5"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
 #define FIRE_TIME 5
 #define DUEL_TIME 60
+#define MAX_DISTANCE 1000.0
 
 enum (+=100)
 {
@@ -52,6 +53,12 @@ new g_bLoadedSpawns;
 new g_szSpawnsFile[128];
 new g_bSetSpawn[2];
 
+new g_iColors[2][3] = 
+{
+	{ 0, 0, 250 },
+	{ 250, 0, 0 }
+};
+
 enum 
 {
 	DUELTYPE_KNIFE = 0,
@@ -80,6 +87,7 @@ public plugin_init()
 	register_clcmd("say /dd", "Command_Duel");
 	register_clcmd("say /duel", "Command_Duel");
 	register_clcmd("duel_spawns", "Command_DuelSpawn", ADMIN_CFG);
+	register_clcmd("drop", "Command_Drop");
 	
 	for(new i; i < sizeof(g_eDuelWeaponWithTurn); i++)
 	{
@@ -186,12 +194,12 @@ public client_disconnect(id)
 {
 	if(g_bDuelStarted && (id == g_iDuelPlayers[DUELIST_CT] || id == g_iDuelPlayers[DUELIST_T]))
 	{
-		g_bDuelStarted = false;
-		g_iDuelPlayers[DUELIST_CT] = 0;
-		g_iDuelPlayers[DUELIST_T] = 0;
-		remove_task(TASK_TURNCHANGER);
-		remove_task(TASK_DUELTIMER);
+		ResetDuel();
 	}
+}
+public Command_Drop(id)
+{
+	return g_bDuelStarted ? PLUGIN_HANDLED : PLUGIN_CONTINUE;
 }
 public Command_DuelSpawn(id, flag)
 {
@@ -203,12 +211,14 @@ public Command_DuelSpawn(id, flag)
 }
 public Show_DuelSpawnControlMenu(id)
 {
-	new menu = menu_create("Duel Spawn Control", "DuelSpawnControl_Handler");
+	new szText[64], menu = menu_create("Duel Spawn Control", "DuelSpawnControl_Handler");
 	menu_additem(menu, "Set \rCT\w spawn");
 	menu_additem(menu, "Set \rT\w spawn");
-	menu_additem(menu, "Show spawns");
+	formatex(szText, charsmax(szText), "%s spawns", g_bShowSpawns ? "Hide" : "Show");
+	menu_additem(menu, szText);
 	menu_additem(menu, "Save spawns^n");
-	menu_additem(menu, "Noclip");
+	formatex(szText, charsmax(szText), "Noclip \r[%s]", get_user_noclip(id) ? "ON" : "OFF");
+	menu_additem(menu, szText);
 	menu_display(id, menu);
 }
 public DuelSpawnControl_Handler(id, menu, item)
@@ -418,7 +428,7 @@ PreparePlayerForWeaponDuel(player)
 	strip_user_weapons(g_iDuelPlayers[player]);
 	set_user_health(g_iDuelPlayers[player], 100);
 	set_user_gravity(g_iDuelPlayers[player], 1.0);
-	set_user_rendering(g_iDuelPlayers[player]);
+	set_user_rendering(g_iDuelPlayers[player], kRenderFxGlowShell, g_iColors[player][0], g_iColors[player][1], g_iColors[player][2], kRenderNormal, 20);
 }
 MovePlayerToSpawn(player)
 {
@@ -440,6 +450,8 @@ StartTurnDuel(type)
 }
 public Task_ChangeTurn()
 {
+	if(!g_bDuelStarted) return;
+	
 	if(g_iDuelTurnTimer > 0)
 	{
 		client_print(g_iDuelPlayers[g_iCurTurn], print_center, "You have %d seconds.", g_iDuelTurnTimer);
@@ -448,9 +460,22 @@ public Task_ChangeTurn()
 	{
 		ExecuteHamB(Ham_Weapon_PrimaryAttack, g_iDuelWeapon[g_iCurTurn]);
 	}
-
+	
+	if(g_bLoadedSpawns)
+	{
+		CheckPlayersDistance();
+	}
+	
 	g_iDuelTurnTimer--;
 	set_task(1.0, "Task_ChangeTurn", TASK_TURNCHANGER);
+}
+CheckPlayersDistance()
+{
+	if(get_entity_distance(g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_T]) > MAX_DISTANCE)
+	{
+		MovePlayerToSpawn(DUELIST_CT);
+		MovePlayerToSpawn(DUELIST_T);
+	}
 }
 public Ham_WeaponPrimaryAttack_Post(weapon)
 {
@@ -491,11 +516,21 @@ public Ham_PlayerKilled_Post(victim, killer)
 		new szName[32]; get_user_name(killer, szName, charsmax(szName));
 		client_print_color(0, killer, "^4[Duel]^1 Duel winner is^3 %s^1.", szName);
 		
-		g_bDuelStarted = false;
-		g_iDuelPlayers[DUELIST_CT] = 0;
-		g_iDuelPlayers[DUELIST_T] = 0;
-		
-		remove_task(TASK_TURNCHANGER);
-		remove_task(TASK_DUELTIMER);
+		ResetDuel();
 	}
+}
+public dr_selected_mode(id, mode)
+{
+	if(g_bDuelStarted && mode != g_iModeDuel)
+	{
+		ResetDuel();
+	}
+}
+ResetDuel()
+{
+	g_bDuelStarted = false;
+	g_iDuelPlayers[DUELIST_CT] = 0;
+	g_iDuelPlayers[DUELIST_T] = 0;
+	remove_task(TASK_TURNCHANGER);
+	remove_task(TASK_DUELTIMER);
 }
