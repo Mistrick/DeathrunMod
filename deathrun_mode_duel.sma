@@ -358,6 +358,14 @@ public DuelType_Handler(id, menu, item)
 		return PLUGIN_HANDLED;
 	}
 	
+	new players[32], pnum; get_players(players, pnum, "aceh", "CT");
+	if(pnum > 1) return PLUGIN_HANDLED;
+	
+	get_players(players, pnum, "aceh", "TERRORIST");
+	if(pnum < 1) return PLUGIN_HANDLED;
+	
+	if(!is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_CT) return PLUGIN_HANDLED;
+	
 	dr_set_mode(g_iModeDuel, 1);
 	
 	DuelStartForward(item);
