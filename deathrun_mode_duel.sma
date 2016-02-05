@@ -367,9 +367,6 @@ public DuelType_Handler(id, menu, item)
 }
 DuelStartForward(type)
 {
-	g_bDuelStarted = true;
-	StartDuelTimer();
-	
 	switch(type)
 	{
 		case DUELTYPE_KNIFE:
@@ -397,14 +394,19 @@ DuelStartForward(type)
 		MovePlayerToSpawn(DUELIST_CT);
 		MovePlayerToSpawn(DUELIST_T);
 	}
+	
+	StartDuelTimer();
 }
 StartDuelTimer()
 {
+	g_bDuelStarted = true;
 	g_iDuelTimer = DUEL_TIME + 1;
 	Task_DuelTimer();
 }
 public Task_DuelTimer()
 {
+	if(!g_bDuelStarted) return;
+	
 	if(--g_iDuelTimer <= 0)
 	{
 		g_bDuelStarted = false;
@@ -441,8 +443,8 @@ StartTurnDuel(type)
 {
 	g_iDuelWeapon[DUELIST_CT] = give_item(g_iDuelPlayers[DUELIST_CT], g_eDuelWeaponWithTurn[type]);
 	g_iDuelWeapon[DUELIST_T] = give_item(g_iDuelPlayers[DUELIST_T], g_eDuelWeaponWithTurn[type]);
-	cs_set_weapon_ammo(g_iDuelWeapon[DUELIST_CT], 1);
-	cs_set_weapon_ammo(g_iDuelWeapon[DUELIST_T], 0);
+	if(pev_valid(g_iDuelWeapon[DUELIST_CT])) cs_set_weapon_ammo(g_iDuelWeapon[DUELIST_CT], 1);
+	if(pev_valid(g_iDuelWeapon[DUELIST_T])) cs_set_weapon_ammo(g_iDuelWeapon[DUELIST_T], 0);
 	
 	g_iDuelTurnTimer = FIRE_TIME;
 	g_iCurTurn = DUELIST_CT;
