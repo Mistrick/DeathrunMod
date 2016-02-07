@@ -12,14 +12,14 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.5"
+#define VERSION "0.5f"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
 #define FIRE_TIME 5
 #define DUEL_TIME 60
-#define MAX_DISTANCE 1000.0
+#define MAX_DISTANCE 1500.0
 
 enum (+=100)
 {
@@ -375,6 +375,8 @@ public DuelType_Handler(id, menu, item)
 }
 DuelStartForward(type)
 {
+	g_bDuelStarted = true;
+	
 	switch(type)
 	{
 		case DUELTYPE_KNIFE:
@@ -407,7 +409,6 @@ DuelStartForward(type)
 }
 StartDuelTimer()
 {
-	g_bDuelStarted = true;
 	g_iDuelTimer = DUEL_TIME + 1;
 	Task_DuelTimer();
 }
@@ -446,6 +447,7 @@ MovePlayerToSpawn(player)
 	set_pev(g_iDuelPlayers[player], pev_v_angle, g_fDuelSpawnAngles[player]);
 	set_pev(g_iDuelPlayers[player], pev_angles, g_fDuelSpawnAngles[player]);
 	set_pev(g_iDuelPlayers[player], pev_fixangle, 1);
+	set_pev(g_iDuelPlayers[player], pev_velocity, {0.0, 0.0, 0.0});
 }
 StartTurnDuel(type)
 {
