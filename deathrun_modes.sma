@@ -99,10 +99,10 @@ public plugin_natives()
 	register_native("dr_register_mode", "native_register_mode", 1);
 	register_native("dr_set_mode", "native_set_mode", 1);
 	register_native("dr_get_mode", "native_get_mode", 1);
-	register_native("dr_set_mode_bhop", "native_set_mode_bhop");
-	register_native("dr_get_mode_bhop", "native_get_mode_bhop");
-	register_native("dr_set_user_bhop", "native_set_user_bhop");
-	register_native("dr_get_user_bhop", "native_get_user_bhop");
+	register_native("dr_set_mode_bhop", "native_set_mode_bhop", 1);
+	register_native("dr_get_mode_bhop", "native_get_mode_bhop", 1);
+	register_native("dr_set_user_bhop", "native_set_user_bhop", 1);
+	register_native("dr_get_user_bhop", "native_get_user_bhop", 1);
 }
 public native_register_mode(Name[32], RoundDelay, CT_BlockWeapons, TT_BlockWeapons, CT_BlockButtons, TT_BlockButtons, Bhop, Usp, Hide)
 {
