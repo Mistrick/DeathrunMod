@@ -56,6 +56,7 @@ public plugin_init()
 	RegisterHam(Ham_TakeDamage, "player", "Ham_TakeDamage_Pre", 0);
 	
 	register_forward(FM_ClientKill, "FM_ClientKill_Pre", 0);
+	register_forward(FM_GetGameDescription, "FM_GetGameDescription_Pre", 0);
 	
 	g_iHamPreThink = RegisterHam(Ham_Player_PreThink, "player", "Ham_PlayerPreThink_Post", 1);
 	
@@ -315,6 +316,12 @@ public Ham_PlayerPreThink_Post(id)
 public FM_ClientKill_Pre(id)
 {
 	return (get_pcvar_num(g_pBlockKill) || is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_T) ? FMRES_SUPERCEDE : FMRES_IGNORED;
+}
+public FM_GetGameDescription_Pre()
+{
+	static szGameName[32]; if(!szGameName[0]) formatex(szGameName, charsmax(szGameName), "Deathrun v%s", VERSION);
+	forward_return(FMV_STRING, szGameName);
+	return FMRES_SUPERCEDE;
 }
 //****************************************//
 stock _get_players(players[32], bool:alive = false)
