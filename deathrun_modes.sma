@@ -239,7 +239,7 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 	{
 		dr_set_mode(g_iModeButtons, 1, activator);
 		show_menu(activator, 0, "^n");
-		client_print_color(0, print_team_default, "%s^3 Terrorist^1 used button. Mode: ^4Buttons^1.", PREFIX);
+		client_print_color(0, print_team_red, "%s^3 Terrorist^1 used button. Mode: ^4Buttons^1.", PREFIX);
 		return HAM_IGNORED;
 	}
 	
@@ -368,9 +368,6 @@ public ModesMenu_Handler(id, key)
 			
 			#if DEFAULT_USP < 1
 			if(g_eCurModeInfo[m_Usp])
-			{
-			new id, players[32], pnum; get_players(players, pnum, "ae", "CT");
-			for(new i = 0; i < pnum; i++)
 			{
 				new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
 				for(new i = 0; i < pnum; i++)
