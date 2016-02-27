@@ -270,7 +270,7 @@ public Ham_PlayerSpawn_Post(id)
 	
 	block_user_radio(id);
 	
-	strip_user_weapons(id);
+	strip_user_weapons(id);//bug with m_bHasPrimary
 	give_item(id, "weapon_knife");
 	
 	return HAM_IGNORED;

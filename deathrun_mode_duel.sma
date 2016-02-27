@@ -420,8 +420,8 @@ public Task_DuelTimer()
 	{
 		g_bDuelStarted = false;
 		
-		ExecuteHamB(Ham_Killed, g_iDuelPlayers[DUELIST_CT], 0, 0);
-		ExecuteHamB(Ham_Killed, g_iDuelPlayers[DUELIST_T], 0, 0);
+		ExecuteHamB(Ham_Killed, g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_CT], 0);
+		ExecuteHamB(Ham_Killed, g_iDuelPlayers[DUELIST_T], g_iDuelPlayers[DUELIST_T], 0);
 
 		g_iDuelPlayers[DUELIST_CT] = 0;
 		g_iDuelPlayers[DUELIST_T] = 0;
