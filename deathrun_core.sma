@@ -132,6 +132,16 @@ public client_putinserver(id)
 	{
 		block_user_spawn(id);
 	}
+	else
+	{
+		if(!is_user_connected(g_iTerrorist))
+		{
+			for(new i = 1; i < g_iMaxPlayers; i++)
+			{
+				user_silentkill(0);
+			}
+		}
+	}
 }
 public client_disconnect(id)
 {
