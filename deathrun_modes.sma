@@ -226,6 +226,7 @@ public Ham_PlayerJump_Pre(id)
 	
 	set_pev(id, pev_velocity, fVelocity);
 	set_pev(id, pev_gaitsequence, 6);
+	set_pev(id, pev_fuser2, 0.0);
 	
 	return HAM_IGNORED;
 }
