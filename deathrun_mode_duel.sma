@@ -169,7 +169,7 @@ FindSpawns()
 	new ent = first_ent, bFind;
 	while((ent = find_ent_by_class(ent, "info_player_start")))
 	{
-		if(get_entity_distance(ent, first_ent) > 150.0)
+		if(get_entity_distance(ent, first_ent) > 250.0)
 		{
 			bFind = true;
 			pev(ent, pev_origin, g_fDuelSpawnOrigins[DUELIST_T]);
@@ -377,25 +377,22 @@ DuelStartForward(type)
 {
 	g_bDuelStarted = true;
 	
+	PrepareForDuel(DUELIST_CT);
+	PrepareForDuel(DUELIST_T);
+	
 	switch(type)
 	{
 		case DUELTYPE_KNIFE:
 		{
-			PreparePlayerForWeaponDuel(DUELIST_CT);
-			PreparePlayerForWeaponDuel(DUELIST_T);
 			give_item(g_iDuelPlayers[DUELIST_CT], "weapon_knife");
 			give_item(g_iDuelPlayers[DUELIST_T], "weapon_knife");
 		}
 		case DUELTYPE_DEAGLE:
 		{
-			PreparePlayerForWeaponDuel(DUELIST_CT);
-			PreparePlayerForWeaponDuel(DUELIST_T);
 			StartTurnDuel(TURNDUEL_DEAGLE);
 		}
 		case DUELTYPE_AWP:
 		{
-			PreparePlayerForWeaponDuel(DUELIST_CT);
-			PreparePlayerForWeaponDuel(DUELIST_T);
 			StartTurnDuel(TURNDUEL_AWP);
 		}
 	}
@@ -434,7 +431,7 @@ public Task_DuelTimer()
 		set_task(1.0, "Task_DuelTimer", TASK_DUELTIMER);
 	}
 }
-PreparePlayerForWeaponDuel(player)
+PrepareForDuel(player)
 {
 	strip_user_weapons(g_iDuelPlayers[player]);
 	set_user_health(g_iDuelPlayers[player], 100);

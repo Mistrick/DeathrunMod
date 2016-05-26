@@ -128,7 +128,10 @@ public native_set_next_terrorist(id)
 }
 public client_putinserver(id)
 {
-	block_user_spawn(id);
+	if(_get_alive_players())
+	{
+		block_user_spawn(id);
+	}
 }
 public client_disconnect(id)
 {
@@ -336,6 +339,11 @@ stock _get_players(players[32], bool:alive = false)
 		players[count++] = i;
 	}
 	return count;
+}
+stock _get_alive_players()
+{
+	new players[32], pnum; get_players(players, pnum, "ach");
+	return pnum;
 }
 stock block_user_radio(id)
 {
