@@ -388,11 +388,9 @@ stock bool:is_in_line_of_sight(ent, Float:start[3], Float:end[3], bool:ignore_pl
 	
 	new Float:fAbsMin[3]; pev(hit_ent, pev_absmin, fAbsMin);
 	new Float:fAbsMax[3]; pev(hit_ent, pev_absmax, fAbsMax);
-	xs_vec_sub(fAbsMax, fAbsMin, fAbsMax);
+	new Float:fVolume[3]; xs_vec_sub(fAbsMax, fAbsMin, fVolume);
 	
-	new Float:fVolume = fAbsMax[0] * fAbsMax[1] * fAbsMax[2];
-	
-	if(fVolume < (32.0 * 32.0 * 32.0)) return true;
+	if(fVolume[0] < 32.0 && fVolume[1] < 32.0 && fVolume[2] < 32.0) return true;
 	
 	return false;
 }
