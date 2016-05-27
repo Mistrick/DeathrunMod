@@ -379,5 +379,20 @@ stock bool:is_in_line_of_sight(ent, Float:start[3], Float:end[3], bool:ignore_pl
 {
 	new trace = 0; engfunc(EngFunc_TraceLine, start, end, (ignore_players ? IGNORE_MONSTERS : DONT_IGNORE_MONSTERS), ent, trace);
 	new Float:fraction; get_tr2(trace, TR_flFraction, fraction);
-	return (fraction == 1.0) ? true : false;
+	
+	if(fraction == 1.0) return true;
+	
+	new hit_ent = get_tr2(trace, TR_pHit);
+	
+	if(!pev_valid(hit_ent)) return false;
+	
+	new Float:fAbsMin[3]; pev(hit_ent, pev_absmin, fAbsMin);
+	new Float:fAbsMax[3]; pev(hit_ent, pev_absmax, fAbsMax);
+	xs_vec_sub(fAbsMax, fAbsMin, fAbsMax);
+	
+	new Float:fVolume = fAbsMax[0] * fAbsMax[1] * fAbsMax[2];
+	
+	if(fVolume < (32.0 * 32.0 * 32.0)) return true;
+	
+	return false;
 }
