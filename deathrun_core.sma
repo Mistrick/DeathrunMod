@@ -1,5 +1,6 @@
 #include <amxmodx>
 #include <cstrike>
+#include <engine>
 #include <fun>
 #include <fakemeta>
 #include <hamsandwich>
@@ -10,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "0.5"
+#define VERSION "0.6"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -57,6 +58,8 @@ public plugin_init()
 	
 	register_forward(FM_ClientKill, "FM_ClientKill_Pre", 0);
 	register_forward(FM_GetGameDescription, "FM_GetGameDescription_Pre", 0);
+	
+	register_touch("func_door", "weaponbox", "Engine_TouchFuncDoor");
 	
 	g_iHamPreThink = RegisterHam(Ham_Player_PreThink, "player", "Ham_PlayerPreThink_Post", 1);
 	
@@ -335,6 +338,13 @@ public FM_GetGameDescription_Pre()
 	static szGameName[32]; if(!szGameName[0]) formatex(szGameName, charsmax(szGameName), "Deathrun v%s", VERSION);
 	forward_return(FMV_STRING, szGameName);
 	return FMRES_SUPERCEDE;
+}
+public Engine_TouchFuncDoor(ent, toucher)
+{
+	if(is_valid_ent(toucher))
+	{
+		remove_entity(toucher);
+	}
 }
 //****************************************//
 stock _get_players(players[32], bool:alive = false)
