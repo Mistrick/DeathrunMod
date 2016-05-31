@@ -16,6 +16,8 @@
 
 #pragma semicolon 1
 
+#define IsPlayer(%1) (%1 && %1 <= 32)
+
 new const PREFIX[] = "^4[DRM]";
 
 new Trie:g_tRemoveEntities;
@@ -139,9 +141,9 @@ public client_putinserver(id)
 	{
 		if(!is_user_connected(g_iTerrorist))
 		{
-			for(new i = 1; i < g_iMaxPlayers; i++)
+			for(new i = 1; i <= g_iMaxPlayers; i++)
 			{
-				user_silentkill(0);
+				user_silentkill(i);
 			}
 		}
 	}
@@ -293,7 +295,7 @@ public Ham_PlayerSpawn_Post(id)
 }
 public Ham_UseButton_Pre(ent, caller, activator, use_type)
 {
-	if(!is_user_alive(activator) || cs_get_user_team(activator) == CS_TEAM_T) return HAM_IGNORED;
+	if(!IsPlayer(activator) || !is_user_alive(activator) || cs_get_user_team(activator) == CS_TEAM_T) return HAM_IGNORED;
 		
 	new Float:fMin[3], Float:fMax[3], Float:fEntOrigin[3];
 	pev(ent, pev_absmin, fMin); pev(ent, pev_absmax, fMax);
