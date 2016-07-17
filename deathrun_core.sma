@@ -11,28 +11,34 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "0.6"
+#define VERSION "0.7"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
 #define IsPlayer(%1) (%1 && %1 <= 32)
 
+#define WARMUP_TIME 15.0
+
+enum (+=100)
+{
+	TASK_RESPAWN = 100
+};
+enum _:Cvars
+{
+	BLOCK_KILL,
+	BLOCK_FALLDMG,
+	AUTOTEAMBALANCE,
+	LIMITTEAMS,
+	RESTART
+};
+
 new const PREFIX[] = "^4[DRM]";
 
-new Trie:g_tRemoveEntities;
-new g_iEntBuyZone;
-new g_iForwardSpawn, HamHook:g_iHamPreThink;
+new g_eCvars[Cvars], g_bWarmUp = true;
+new g_iForwardSpawn, HamHook:g_iHamPreThink, Trie:g_tRemoveEntities;
 new g_msgShowMenu, g_msgVGUIMenu, g_msgAmmoPickup, g_msgWeapPickup;
-
-new g_pBlockFallDmg, g_pBlockKill;
-new g_pAutoBalance, g_pLimitTeams, g_pSvRestart;
-
-new g_iOldAmmoPickupBlock, g_iOldWeapPickupBlock;
-
-new g_iTerrorist, g_iNextTerrorist;
-
-new g_iMaxPlayers;
+new g_iOldAmmoPickupBlock, g_iOldWeapPickupBlock, g_iTerrorist, g_iNextTerrorist, g_iMaxPlayers;
 
 public plugin_init()
 {
@@ -40,12 +46,12 @@ public plugin_init()
 	
 	register_cvar("deathrun_core_version", VERSION, FCVAR_SERVER | FCVAR_SPONLY);
 	
-	g_pBlockKill = register_cvar("deathrun_block_kill", "1");
-	g_pBlockFallDmg = register_cvar("deathrun_block_falldmg", "1");
+	g_eCvars[BLOCK_KILL] = register_cvar("deathrun_block_kill", "1");
+	g_eCvars[BLOCK_FALLDMG] = register_cvar("deathrun_block_falldmg", "1");
 	
-	g_pAutoBalance = get_cvar_pointer("mp_autoteambalance");
-	g_pLimitTeams  = get_cvar_pointer("mp_limitteams");
-	g_pSvRestart = get_cvar_pointer("sv_restart");
+	g_eCvars[AUTOTEAMBALANCE] = get_cvar_pointer("mp_autoteambalance");
+	g_eCvars[LIMITTEAMS]  = get_cvar_pointer("mp_limitteams");
+	g_eCvars[RESTART] = get_cvar_pointer("sv_restart");
 	
 	register_clcmd("chooseteam", "Command_ChooseTeam");
 	
@@ -54,6 +60,7 @@ public plugin_init()
 	
 	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Pre", 0);
 	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Post", 1);
+	RegisterHam(Ham_Killed, "player", "Ham_PlayerKilled_Post", 1);
 	RegisterHam(Ham_Use, "func_button", "Ham_UseButton_Pre", 0);
 	RegisterHam(Ham_Use, "func_door", "Ham_UseDoor_Pre", 0);
 	RegisterHam(Ham_TakeDamage, "player", "Ham_TakeDamage_Pre", 0);
@@ -77,13 +84,17 @@ public plugin_init()
 	unregister_forward(FM_Spawn, g_iForwardSpawn, 0);
 	TrieDestroy(g_tRemoveEntities);
 	
-	set_pcvar_num(g_pSvRestart, 5);
+	set_task(WARMUP_TIME, "Task_WarmupOff");
 	
 	Block_Commands();
 	
 	g_iMaxPlayers = get_maxplayers();
 }
-
+public Task_WarmupOff()
+{
+	g_bWarmUp = false;
+	set_pcvar_num(g_eCvars[RESTART], 1);
+}
 public plugin_precache()
 {
 	new const szRemoveEntities[][] = 
@@ -97,10 +108,8 @@ public plugin_precache()
 		TrieSetCell(g_tRemoveEntities, szRemoveEntities[i], i);
 	}
 	g_iForwardSpawn = register_forward(FM_Spawn, "FakeMeta_Spawn_Pre", 0);
-	
-	g_iEntBuyZone = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "func_buyzone"));
+	engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "func_buyzone"));
 }
-
 public FakeMeta_Spawn_Pre(ent)
 {
 	if(!pev_valid(ent)) return FMRES_IGNORED;
@@ -109,10 +118,6 @@ public FakeMeta_Spawn_Pre(ent)
 	
 	if(TrieKeyExists(g_tRemoveEntities, szClassName))
 	{
-		if(ent == g_iEntBuyZone)
-		{
-			return FMRES_IGNORED;
-		}
 		engfunc(EngFunc_RemoveEntity, ent);
 		return FMRES_SUPERCEDE;
 	}
@@ -133,19 +138,9 @@ public native_set_next_terrorist(id)
 }
 public client_putinserver(id)
 {
-	if(_get_alive_players())
+	if(!g_bWarmUp && _get_alive_players())
 	{
 		block_user_spawn(id);
-	}
-	else
-	{
-		if(!is_user_connected(g_iTerrorist))
-		{
-			for(new i = 1; i <= g_iMaxPlayers; i++)
-			{
-				user_silentkill(i);
-			}
-		}
 	}
 }
 public client_disconnect(id)
@@ -168,7 +163,7 @@ public client_disconnect(id)
 		}
 		else
 		{
-			set_pcvar_num(g_pSvRestart, 5);
+			set_pcvar_num(g_eCvars[RESTART], 5);
 		}
 	}
 }
@@ -194,8 +189,8 @@ public Command_BlockCmds(id)
 //******** Events ********//
 public Event_NewRound()
 {
-	set_pcvar_num(g_pAutoBalance, 0);
-	set_pcvar_num(g_pLimitTeams, 0);
+	set_pcvar_num(g_eCvars[AUTOTEAMBALANCE], 0);
+	set_pcvar_num(g_eCvars[LIMITTEAMS], 0);
 	TeamBalance();	
 }
 TeamBalance()
@@ -293,6 +288,21 @@ public Ham_PlayerSpawn_Post(id)
 	
 	return HAM_IGNORED;
 }
+public Ham_PlayerKilled_Post(id)
+{
+	if(g_bWarmUp && cs_get_user_team(id) == CS_TEAM_CT && _get_alive_players())
+	{
+		set_task(0.1, "Task_Respawn", id + TASK_RESPAWN);
+	}
+}
+public Task_Respawn(id)
+{
+	id -= TASK_RESPAWN;
+	if(is_user_connected(id))
+	{
+		ExecuteHamB(Ham_CS_RoundRespawn, id);
+	}
+}
 public Ham_UseButton_Pre(ent, caller, activator, use_type)
 {
 	if(!IsPlayer(activator) || !is_user_alive(activator) || cs_get_user_team(activator) == CS_TEAM_T) return HAM_IGNORED;
@@ -311,11 +321,11 @@ public Ham_UseButton_Pre(ent, caller, activator, use_type)
 }
 public Ham_UseDoor_Pre(ent, caller, activator, use_type)
 {
-	return (activator && activator <= g_iMaxPlayers) ? HAM_SUPERCEDE : HAM_IGNORED;
+	return IsPlayer(activator) ? HAM_SUPERCEDE : HAM_IGNORED;
 }
 public Ham_TakeDamage_Pre( id, inflictor, attacker, Float:damage, damage_bits )
 {
-	return (get_pcvar_num(g_pBlockFallDmg) && damage_bits & DMG_FALL && cs_get_user_team(id) == CS_TEAM_T) ? HAM_SUPERCEDE : HAM_IGNORED;
+	return (damage_bits & DMG_FALL && get_pcvar_num(g_eCvars[BLOCK_FALLDMG]) && cs_get_user_team(id) == CS_TEAM_T) ? HAM_SUPERCEDE : HAM_IGNORED;
 }
 public Ham_PlayerPreThink_Post(id)
 {
@@ -333,7 +343,7 @@ public Ham_PlayerPreThink_Post(id)
 //*******
 public FM_ClientKill_Pre(id)
 {
-	return (get_pcvar_num(g_pBlockKill) || is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_T) ? FMRES_SUPERCEDE : FMRES_IGNORED;
+	return (get_pcvar_num(g_eCvars[BLOCK_KILL]) || is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_T) ? FMRES_SUPERCEDE : FMRES_IGNORED;
 }
 public FM_GetGameDescription_Pre()
 {
