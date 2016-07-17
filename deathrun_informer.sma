@@ -10,17 +10,18 @@
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.4"
+#define VERSION "0.5"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
 #define UPDATE_INTERVAL 1.0
+//#define DONT_SHOW_FOR_ALIVE
 
 new const PREFIX[] = "[DRI]";
 
 new g_szCurMode[32], g_iConnectedCount, g_iMaxPlayers, g_iHudInformer, g_iHudSpecList, g_iHudSpeed;
-new bool:g_bAlive[33], bool:g_bInformer[33], bool:g_bSpeed[33], bool:g_bSpecList[33];
+new bool:g_bConnected[33], bool:g_bAlive[33], bool:g_bInformer[33], bool:g_bSpeed[33], bool:g_bSpecList[33];
 new g_iHealth[33], g_iMoney[33], g_iFrames[33], g_iPlayerFps[33];
 
 public plugin_init()
@@ -51,6 +52,7 @@ public plugin_init()
 }
 public client_putinserver(id)
 {
+	g_bConnected[id] = true;
 	g_bInformer[id] = true;
 	g_bSpecList[id] = true;
 	g_bSpeed[id] = true;
@@ -58,6 +60,7 @@ public client_putinserver(id)
 }
 public client_disconnect(id)
 {
+	g_bConnected[id] = false;
 	g_bAlive[id] = false;
 	g_iConnectedCount--;
 }
@@ -128,36 +131,32 @@ public Task_ShowInfo()
 	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "All Players: %d/%d", g_iConnectedCount, g_iMaxPlayers);	
 
 	static szSpecInfo[1152];
-	new iAllPlayers[32], iAllNum; get_players(iAllPlayers, iAllNum, "ch");
-	for(new id, i; i < iAllNum; i++)
+	for(new id = 1; id <= g_iMaxPlayers; id++)
 	{
-		id = iAllPlayers[i];
+		if(!g_bConnected[id]) continue;
+		
+		if(g_bInformer[id])
+		{
+			set_hudmessage(55, 245, 55, 0.02, 0.18, 0, _, UPDATE_INTERVAL, _, _, 3);
+			ShowSyncHudMsg(id, g_iHudInformer, szInformer);
+		}
+		
+		if(!g_bAlive[id]) continue;
 		
 		if(g_iHealth[id] >= 255)
 		{
 			set_dhudmessage(55, 245, 55, 0.02, 0.90, 0, _, UPDATE_INTERVAL - 0.05, _, _, false);
 			show_dhudmessage(id, "Health: %d", g_iHealth[id]);
 		}
-		if(g_bInformer[id])
-		{
-			set_hudmessage(55, 245, 55, 0.02, 0.18, 0, _, UPDATE_INTERVAL, _, _, 3);
-			ShowSyncHudMsg(id, g_iHudInformer, szInformer);
-		}
-
-		
-		if(!g_bAlive[id]) continue;
-		
-		new iDeadPlayers[32], iDeadNum; get_players(iDeadPlayers, iDeadNum, "bch");
-		
-		if(iDeadNum == 0) continue;
 		
 		new bool:bShowInfo[33];
 		get_user_name(id, szName, charsmax(szName));
 		iLen = formatex(szSpecInfo, charsmax(szSpecInfo), "Player: %s^nHealth: %dHP, Money: $%d, FPS: %d^n", szName, g_iHealth[id], g_iMoney[id], g_iPlayerFps[id]);
 		
-		for(new dead, j; j < iDeadNum; j++)
+		for(new dead = 1; dead <= g_iMaxPlayers; dead++)
 		{
-			dead = iDeadPlayers[j];
+			if(!g_bConnected[dead] || g_bAlive[dead]) continue;
+			
 			if(pev(dead, pev_iuser2) == id)
 			{
 				get_user_name(dead, szName, charsmax(szName));				
@@ -169,9 +168,11 @@ public Task_ShowInfo()
 		}
 		if(bShowInfo[id])
 		{
-			for(new player, j; j < iAllNum; j++)
+			#if defined DONT_SHOW_FOR_ALIVE
+			bShowInfo[id] = false;
+			#endif
+			for(new player = 1; player < g_iMaxPlayers; player++)
 			{
-				player = iAllPlayers[j];
 				if(g_bSpecList[player] && bShowInfo[player])
 				{
 					set_hudmessage(245, 245, 245, 0.70, 0.15, 0, _, UPDATE_INTERVAL, _, _, 3);
@@ -185,10 +186,8 @@ public Task_ShowInfo()
 public Task_ShowSpeed()
 {
 	new Float:fSpeed, Float:fVelocity[3], iSpecmode;
-	new players[32], pnum; get_players(players, pnum, "ch");
-	for(new id, i, target; id < pnum; i++)
+	for(new id = 1, target; id <= g_iMaxPlayers; id++)
 	{
-		id = players[i];
 		if(!g_bSpeed[id]) continue;
 		
 		iSpecmode = pev(id, pev_iuser1);
@@ -208,7 +207,13 @@ public dr_selected_mode(id, mode)
 }
 stock get_ct(&alive, &count)
 {
-	new players[32];
-	get_players(players, count, "ceh", "CT");
-	get_players(players, alive, "aceh", "CT");
+	count = 0; alive = 0;
+	for(new id = 1; id <= g_iMaxPlayers; id++)
+	{
+		if(g_bConnected[id])
+		{
+			count++;
+			if(g_bAlive[id]) alive++;
+		}
+	}
 }
