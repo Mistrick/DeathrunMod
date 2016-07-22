@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.6"
+#define VERSION "0.6f"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -531,7 +531,10 @@ public Task_ChangeTurn()
 	}
 	else
 	{
-		ExecuteHamB(Ham_Weapon_PrimaryAttack, g_iDuelWeapon[g_iCurTurn]);
+		if(pev_valid(g_iDuelWeapon[g_iCurTurn]))
+		{
+			ExecuteHamB(Ham_Weapon_PrimaryAttack, g_iDuelWeapon[g_iCurTurn]);
+		}
 	}
 	
 	if(g_bLoadedSpawns)
@@ -544,6 +547,10 @@ public Task_ChangeTurn()
 }
 CheckPlayersDistance()
 {
+	if(!is_user_alive(g_iDuelPlayers[DUELIST_CT]) || !is_user_alive(g_iDuelPlayers[DUELIST_T]))
+	{
+		return;
+	}
 	if(get_entity_distance(g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_T]) > MAX_DISTANCE)
 	{
 		MovePlayerToSpawn(DUELIST_CT);
@@ -598,7 +605,15 @@ public Ham_PlayerKilled_Post(victim, killer)
 {
 	if(g_bDuelStarted && (victim == g_iDuelPlayers[DUELIST_CT] || victim == g_iDuelPlayers[DUELIST_T]))
 	{
-		FinishDuel(killer, victim);
+		if(killer != victim && (killer == g_iDuelPlayers[DUELIST_CT] || killer == g_iDuelPlayers[DUELIST_T]))
+		{
+			FinishDuel(killer, victim);
+		}
+		else
+		{
+			ResetDuel();
+			ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
+		}
 	}
 	#if defined SHOW_MENU_FOR_LAST_CT
 	else
