@@ -210,7 +210,7 @@ stock get_ct(&alive, &count)
 	count = 0; alive = 0;
 	for(new id = 1; id <= g_iMaxPlayers; id++)
 	{
-		if(g_bConnected[id])
+		if(g_bConnected[id] && get_user_team(id) == 2)
 		{
 			count++;
 			if(g_bAlive[id]) alive++;

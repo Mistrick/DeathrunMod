@@ -12,11 +12,14 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.5f"
+#define VERSION "0.6"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
+#define SHOW_MENU_FOR_LAST_CT
+
+#define PRESTART_TIME 5
 #define FIRE_TIME 5
 #define DUEL_TIME 60
 #define MAX_DISTANCE 1500.0
@@ -24,22 +27,33 @@
 enum (+=100)
 {
 	TASK_TURNCHANGER = 100,
+	TASK_PRESTART_TIMER,
 	TASK_DUELTIMER
-}
+};
 
+new const PREFIX[] = "^4[Duel]";
 new const SPAWNS_DIR[] = "deathrun_duel";
 
 const XO_CBASEPLAYERWEAPON = 4;
 const m_pPlayer = 41;
 
+enum _:DUEL_FORWARDS
+{
+	DUEL_PRESTART,
+	DUEL_START,
+	DUEL_FINISH,
+	DUEL_CANCELED
+};
 enum
 {
 	DUELIST_CT = 0,
 	DUELIST_T
-}
+};
 
 new g_iModeDuel;
+new g_bDuelPreStart;
 new g_bDuelStarted;
+new g_iDuelType;
 new g_iDuelPlayers[2];
 new g_iDuelWeapon[2];
 new g_iDuelTurnTimer;
@@ -59,7 +73,10 @@ new g_iColors[2][3] =
 	{ 250, 0, 0 }
 };
 
-enum 
+new g_iForwards[DUEL_FORWARDS];
+new g_iReturn;
+
+enum
 {
 	DUELTYPE_KNIFE = 0,
 	DUELTYPE_DEAGLE,
@@ -70,6 +87,7 @@ enum
 	TURNDUEL_DEAGLE = 0,
 	TURNDUEL_AWP
 };
+
 new g_eDuelMenuItems[][] =
 {
 	"Knife",
@@ -94,10 +112,16 @@ public plugin_init()
 		RegisterHam(Ham_Weapon_PrimaryAttack, g_eDuelWeaponWithTurn[i], "Ham_WeaponPrimaryAttack_Post", true);
 	}
 	
+	RegisterHam(Ham_Weapon_SecondaryAttack, "weapon_awp", "Ham_SecondaryAttack_Pre", false);
 	RegisterHam(Ham_TakeDamage, "player", "Ham_PlayerTakeDamage_Pre", false);
 	RegisterHam(Ham_Killed, "player", "Ham_PlayerKilled_Post", true);
 	register_touch("trigger_teleport", "player", "Engine_DuelTouch");
 	register_touch("trigger_push", "player", "Engine_DuelTouch");
+	
+	g_iForwards[DUEL_PRESTART] = CreateMultiForward("dr_duel_prestart", ET_IGNORE, FP_CELL, FP_CELL);
+	g_iForwards[DUEL_START] = CreateMultiForward("dr_duel_start", ET_IGNORE, FP_CELL, FP_CELL);
+	g_iForwards[DUEL_FINISH] = CreateMultiForward("dr_duel_finish", ET_IGNORE, FP_CELL, FP_CELL);
+	g_iForwards[DUEL_CANCELED] = CreateMultiForward("dr_duel_canceled", ET_IGNORE);
 	
 	g_iModeDuel = dr_register_mode
 	(
@@ -107,7 +131,7 @@ public plugin_init()
 		.TT_BlockWeapons = 1,
 		.CT_BlockButtons = 1,
 		.TT_BlockButtons = 1,
-		.Bhop = 1,
+		.Bhop = 0,
 		.Usp = 0,
 		.Hide = 1
 	);
@@ -166,15 +190,23 @@ FindSpawns()
 {
 	new first_ent = find_ent_by_class(-1, "info_player_start");
 	pev(first_ent, pev_origin, g_fDuelSpawnOrigins[DUELIST_CT]);
+	
 	new ent = first_ent, bFind;
-	while((ent = find_ent_by_class(ent, "info_player_start")))
+	new Float:distance = 1000.0;
+	
+	while(distance > 100.0 && !bFind)
 	{
-		if(get_entity_distance(ent, first_ent) > 250.0)
+		while((ent = find_ent_by_class(ent, "info_player_start")))
 		{
-			bFind = true;
-			pev(ent, pev_origin, g_fDuelSpawnOrigins[DUELIST_T]);
-			break;
+			if(get_entity_distance(ent, first_ent) > distance)
+			{
+				bFind = true;
+				pev(ent, pev_origin, g_fDuelSpawnOrigins[DUELIST_T]);
+				break;
+			}
 		}
+		distance -= 100.0;
+		ent = first_ent;
 	}
 	if(bFind)
 	{
@@ -192,9 +224,10 @@ GetSpawnAngles()
 }
 public client_disconnect(id)
 {
-	if(g_bDuelStarted && (id == g_iDuelPlayers[DUELIST_CT] || id == g_iDuelPlayers[DUELIST_T]))
+	if((g_bDuelStarted || g_bDuelPreStart) && (id == g_iDuelPlayers[DUELIST_CT] || id == g_iDuelPlayers[DUELIST_T]))
 	{
 		ResetDuel();
+		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
 	}
 }
 public Command_Drop(id)
@@ -308,7 +341,7 @@ SaveSpawns(id)
 {
 	if(!g_bSetSpawn[DUELIST_CT] || !g_bSetSpawn[DUELIST_T])
 	{
-		client_print_color(id, print_team_default, "^4[Duel]^1 You must set two spawns.");
+		client_print_color(id, print_team_default, "^%s^1 You must set two spawns.", PREFIX);
 		return;
 	}
 	if(file_exists(g_szSpawnsFile))
@@ -323,7 +356,7 @@ SaveSpawns(id)
 		fclose(file);
 		g_bLoadedSpawns = true;
 		GetSpawnAngles();
-		client_print_color(id, print_team_default, "^4[Duel]^1 Spawns saved.");
+		client_print_color(id, print_team_default, "%s^1 Spawns saved.", PREFIX);
 	}
 }
 public Command_Duel(id)
@@ -364,21 +397,55 @@ public DuelType_Handler(id, menu, item)
 	get_players(players, pnum, "aceh", "TERRORIST");
 	if(pnum < 1) return PLUGIN_HANDLED;
 	
-	if(!is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_CT) return PLUGIN_HANDLED;
+	if(!is_user_alive(id) || !is_user_alive(g_iDuelPlayers[DUELIST_T]) ||cs_get_user_team(id) != CS_TEAM_CT) return PLUGIN_HANDLED;
 	
 	dr_set_mode(g_iModeDuel, 1);
 	
-	DuelStartForward(item);
+	g_iDuelType = item;
+	
+	DuelPreStart();
 	
 	menu_destroy(menu);
 	return PLUGIN_HANDLED;
 }
-DuelStartForward(type)
+DuelPreStart()
 {
-	g_bDuelStarted = true;
+	g_bDuelPreStart = true;
 	
 	PrepareForDuel(DUELIST_CT);
 	PrepareForDuel(DUELIST_T);
+	
+	if(g_bLoadedSpawns)
+	{
+		MovePlayerToSpawn(DUELIST_CT);
+		MovePlayerToSpawn(DUELIST_T);
+	}
+	
+	g_iDuelTimer = PRESTART_TIME + 1;
+	Task_PreStartTimer();
+	
+	ExecuteForward(g_iForwards[DUEL_PRESTART], g_iReturn, g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_T]);
+	
+	client_print_color(0, print_team_default, "%s^1 Duel will start in ^3%d seconds.", PREFIX, PRESTART_TIME);
+}
+public Task_PreStartTimer()
+{
+	if(!g_bDuelPreStart) return;
+	
+	if(--g_iDuelTimer <= 0)
+	{
+		DuelStartForward(g_iDuelType);
+	}
+	else
+	{
+		set_task(1.0, "Task_PreStartTimer", TASK_PRESTART_TIMER);
+	}
+}
+
+DuelStartForward(type)
+{
+	g_bDuelStarted = true;
+	g_bDuelPreStart = false;
 	
 	switch(type)
 	{
@@ -396,13 +463,10 @@ DuelStartForward(type)
 			StartTurnDuel(TURNDUEL_AWP);
 		}
 	}
-	if(g_bLoadedSpawns)
-	{
-		MovePlayerToSpawn(DUELIST_CT);
-		MovePlayerToSpawn(DUELIST_T);
-	}
 	
 	StartDuelTimer();
+	
+	ExecuteForward(g_iForwards[DUEL_START], g_iReturn, g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_T]);
 }
 StartDuelTimer()
 {
@@ -424,7 +488,7 @@ public Task_DuelTimer()
 		g_iDuelPlayers[DUELIST_T] = 0;
 		
 		remove_task(TASK_TURNCHANGER);
-		client_print_color(0, print_team_default, "^4[Duel]^1 Duel time is over.");
+		client_print_color(0, print_team_default, "%s^1 Duel time is over.", PREFIX);
 	}
 	else
 	{
@@ -503,9 +567,21 @@ public Ham_WeaponPrimaryAttack_Post(weapon)
 	
 	return HAM_IGNORED;
 }
+public Ham_SecondaryAttack_Pre(weapon)
+{
+	return g_bDuelStarted ? HAM_SUPERCEDE : HAM_IGNORED;
+}
 public Ham_PlayerTakeDamage_Pre(victim, idinflictor, attacker, Float:damage, damagebits)
 {
-	if(!g_bDuelStarted || victim == attacker || (victim != g_iDuelPlayers[DUELIST_CT] && victim != g_iDuelPlayers[DUELIST_T])) return HAM_IGNORED;
+	if(g_bDuelPreStart)
+	{
+		return HAM_SUPERCEDE;
+	}
+	
+	if(!g_bDuelStarted || victim == attacker || (victim != g_iDuelPlayers[DUELIST_CT] && victim != g_iDuelPlayers[DUELIST_T]))
+	{
+		return HAM_IGNORED;
+	}
 	
 	if(attacker != g_iDuelPlayers[DUELIST_CT] && attacker != g_iDuelPlayers[DUELIST_T])
 	{
@@ -522,24 +598,70 @@ public Ham_PlayerKilled_Post(victim, killer)
 {
 	if(g_bDuelStarted && (victim == g_iDuelPlayers[DUELIST_CT] || victim == g_iDuelPlayers[DUELIST_T]))
 	{
-		new szName[32]; get_user_name(killer, szName, charsmax(szName));
-		client_print_color(0, killer, "^4[Duel]^1 Duel winner is^3 %s^1.", szName);
-		
-		ResetDuel();
+		FinishDuel(killer, victim);
 	}
+	#if defined SHOW_MENU_FOR_LAST_CT
+	else
+	{
+		new players[32], pnum; get_players(players, pnum, "aceh", "CT");
+		if(pnum == 1)
+		{
+			Show_DuelOffer(players[0]);
+		}
+	}
+	#endif
+}
+#if defined SHOW_MENU_FOR_LAST_CT
+Show_DuelOffer(id)
+{
+	new iMenu = menu_create("Do you want start duel?", "DuelOffer_Handler");
+	
+	menu_additem(iMenu, "Yes");
+	menu_additem(iMenu, "No");
+	menu_setprop(iMenu, MPROP_PERPAGE, 0);
+	
+	menu_display(id, iMenu);
+}
+public DuelOffer_Handler(id, menu, item)
+{
+	if(item == MENU_EXIT)
+	{
+		menu_destroy(menu);
+		return PLUGIN_HANDLED;
+	}
+	
+	if(item == 0)
+	{
+		Command_Duel(id);
+	}
+	
+	menu_destroy(menu);
+	return PLUGIN_HANDLED;
+}
+#endif
+FinishDuel(winner, looser)
+{
+	ResetDuel();
+	ExecuteForward(g_iForwards[DUEL_FINISH], g_iReturn, winner, looser);
+	
+	new szName[32]; get_user_name(winner, szName, charsmax(szName));
+	client_print_color(0, winner, "%s^1 Duel winner is^3 %s^1.", PREFIX, szName);
 }
 public dr_selected_mode(id, mode)
 {
-	if(g_bDuelStarted && mode != g_iModeDuel)
+	if((g_bDuelPreStart || g_bDuelStarted) && mode != g_iModeDuel)
 	{
 		ResetDuel();
+		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
 	}
 }
 ResetDuel()
 {
+	g_bDuelPreStart = false;
 	g_bDuelStarted = false;
 	g_iDuelPlayers[DUELIST_CT] = 0;
 	g_iDuelPlayers[DUELIST_T] = 0;
+	remove_task(TASK_PRESTART_TIMER);
 	remove_task(TASK_TURNCHANGER);
 	remove_task(TASK_DUELTIMER);
 }
