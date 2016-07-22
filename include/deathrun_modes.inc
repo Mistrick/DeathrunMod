@@ -95,3 +95,36 @@ native dr_get_terrorist();
  * @param id				Индекс игрока.
  */
 native dr_set_next_terrorist(id);
+
+/**
+ * deathrun_modes_duel
+ */
+
+ /**
+ * Форвард, который вызывается до начала дуэли, во время разминки.
+ * 
+ * @param duelist_ct			Индекс игрока.
+ * @param duelist_t				Индекс игрока.
+ */
+forward dr_duel_prestart(duelist_ct, duelist_t);
+
+ /**
+ * Форвард, который вызывается когда началась дуэль.
+ * 
+ * @param duelist_ct			Индекс игрока.
+ * @param duelist_t				Индекс игрока.
+ */
+forward dr_duel_start(duelist_ct, duelist_t);
+
+ /**
+ * Форвард, который вызывается когда закончилась дуэль.
+ * 
+ * @param winner				Индекс победителя.
+ * @param looser				Индекс проигравшего.
+ */
+forward dr_duel_finish(winner, looser);
+
+ /**
+ * Форвард, который вызывается когда отменили дуэль.
+ */
+forward dr_duel_canceled();
