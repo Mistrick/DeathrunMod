@@ -8,7 +8,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "0.1"
+#define VERSION "0.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -142,8 +142,9 @@ public FM_SetModel_Post(ent, const model[])
 }
 public CreateSnowBall(id)
 {
+	new iVectorStart[3]; get_user_origin(id, iVectorStart, 1);
 	new iVectorEnd[3]; get_user_origin(id, iVectorEnd, 3);
-	new Float:fVectorStart[3]; pev(id, pev_origin, fVectorStart);
+	new Float:fVectorStart[3]; IVecFVec(iVectorStart, fVectorStart);
 	new Float:fVectorEnd[3]; IVecFVec(iVectorEnd, fVectorEnd);
 	new Float:fVelocity[3]; xs_vec_sub(fVectorEnd, fVectorStart, fVelocity);
 	new Float:fNormal[3]; xs_vec_normalize(fVelocity, fNormal);
@@ -165,8 +166,8 @@ public CreateSnowBall(id)
 
 	set_pev(ent, pev_velocity, fVelocity);
 	
-	//set_task(0.1, "Task_SetTrail", ent);
-	trail_msg(ent, g_iSprite, 5, 8, 55, 55, 255, 150);
+	set_task(0.1, "Task_SetTrail", ent);
+	//trail_msg(ent, g_iSprite, 5, 8, 55, 55, 255, 150);
 }
 public Task_SetTrail(ent)
 {
