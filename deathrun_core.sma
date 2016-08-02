@@ -58,19 +58,19 @@ public plugin_init()
 	register_event("HLTV", "Event_NewRound", "a", "1=0", "2=0");
 	register_logevent("Event_RoundStart", 2, "1=Round_Start");
 	
-	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Pre", 0);
-	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Post", 1);
-	RegisterHam(Ham_Killed, "player", "Ham_PlayerKilled_Post", 1);
-	RegisterHam(Ham_Use, "func_button", "Ham_UseButton_Pre", 0);
-	RegisterHam(Ham_Use, "func_door", "Ham_UseDoor_Pre", 0);
-	RegisterHam(Ham_TakeDamage, "player", "Ham_TakeDamage_Pre", 0);
+	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Pre", false);
+	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Post", true);
+	RegisterHam(Ham_Killed, "player", "Ham_PlayerKilled_Post", true);
+	RegisterHam(Ham_Use, "func_button", "Ham_UseButton_Pre", false);
+	RegisterHam(Ham_Use, "func_door", "Ham_UseDoor_Pre", false);
+	RegisterHam(Ham_TakeDamage, "player", "Ham_TakeDamage_Pre", false);
 	
-	register_forward(FM_ClientKill, "FM_ClientKill_Pre", 0);
-	register_forward(FM_GetGameDescription, "FM_GetGameDescription_Pre", 0);
+	register_forward(FM_ClientKill, "FM_ClientKill_Pre", false);
+	register_forward(FM_GetGameDescription, "FM_GetGameDescription_Pre", false);
 	
 	register_touch("func_door", "weaponbox", "Engine_TouchFuncDoor");
 	
-	g_iHamPreThink = RegisterHam(Ham_Player_PreThink, "player", "Ham_PlayerPreThink_Post", 1);
+	g_iHamPreThink = RegisterHam(Ham_Player_PreThink, "player", "Ham_PlayerPreThink_Post", true);
 	
 	g_msgVGUIMenu = get_user_msgid("VGUIMenu");
 	g_msgShowMenu = get_user_msgid("ShowMenu");
@@ -315,7 +315,7 @@ public Ham_UseButton_Pre(ent, caller, activator, use_type)
 	new iPlayerOrigin[3]; get_user_origin(activator, iPlayerOrigin, 1);
 	new Float:fPlayerOrigin[3]; IVecFVec(iPlayerOrigin, fPlayerOrigin);
 	
-	new bool:bCanUse = is_in_line_of_sight(ent, fPlayerOrigin, fEntOrigin);
+	new bool:bCanUse = allow_press_button(ent, fPlayerOrigin, fEntOrigin);
 	
 	return bCanUse ? HAM_IGNORED : HAM_SUPERCEDE;
 }
@@ -323,9 +323,14 @@ public Ham_UseDoor_Pre(ent, caller, activator, use_type)
 {
 	return IsPlayer(activator) ? HAM_SUPERCEDE : HAM_IGNORED;
 }
-public Ham_TakeDamage_Pre( id, inflictor, attacker, Float:damage, damage_bits )
+public Ham_TakeDamage_Pre(id, inflictor, attacker, Float:damage, damage_bits)
 {
-	return (damage_bits & DMG_FALL && get_pcvar_num(g_eCvars[BLOCK_FALLDMG]) && cs_get_user_team(id) == CS_TEAM_T) ? HAM_SUPERCEDE : HAM_IGNORED;
+	if(damage_bits & DMG_FALL && get_pcvar_num(g_eCvars[BLOCK_FALLDMG]) && cs_get_user_team(id) == CS_TEAM_T)
+	{
+		HAM_SUPERCEDE;
+	}
+	
+	return HAM_IGNORED;
 }
 public Ham_PlayerPreThink_Post(id)
 {
@@ -387,7 +392,7 @@ stock block_user_spawn(id)
 	const m_iSpawnCount = 365;
 	set_pdata_int(id, m_iSpawnCount, 1);
 }
-stock bool:is_in_line_of_sight(ent, Float:start[3], Float:end[3], bool:ignore_players = true)
+stock bool:allow_press_button(ent, Float:start[3], Float:end[3], bool:ignore_players = true)
 {
 	new trace = 0; engfunc(EngFunc_TraceLine, start, end, (ignore_players ? IGNORE_MONSTERS : DONT_IGNORE_MONSTERS), ent, trace);
 	new Float:fraction; get_tr2(trace, TR_flFraction, fraction);

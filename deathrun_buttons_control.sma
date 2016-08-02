@@ -5,7 +5,7 @@
 #include <hamsandwich>
 
 #define PLUGIN "Deathrun: Buttons Control"
-#define VERSION "0.1"
+#define VERSION "0.1f"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -67,7 +67,8 @@ LoadButtons()
 	}
 	if(!g_iButtonsCount)
 	{
-		set_fail_state("Map doesn't have any buttons.");
+		log_amx("Map doesn't have any buttons.");
+		pause("a");
 	}
 }
 public Event_NewRound()
