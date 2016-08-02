@@ -360,6 +360,7 @@ public ModesMenu_Handler(id, key)
 		default:
 		{
 			new iMode = key + g_iPage[id] * 8;
+			iMode += get_hidden_modes(iMode);
 			
 			g_iCurMode = iMode;
 			
@@ -452,6 +453,7 @@ bool:is_all_modes_blocked()
 	}
 	return true;
 }
+get_hidden_modes(last_mode)
 {
 	new count, eModeInfo[ModeData];
 	for(new i; i < last_mode; i++)
