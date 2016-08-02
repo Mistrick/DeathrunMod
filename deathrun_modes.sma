@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.4"
+#define VERSION "0.5"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -107,19 +107,19 @@ public plugin_natives()
 public native_register_mode(Name[32], RoundDelay, CT_BlockWeapons, TT_BlockWeapons, CT_BlockButtons, TT_BlockButtons, Bhop, Usp, Hide)
 {
 	param_convert(1);
-	new ModeInfo[ModeData];
+	new eModeInfo[ModeData];
 	
-	copy(ModeInfo[m_Name], charsmax(ModeInfo[m_Name]), Name);
-	ModeInfo[m_RoundDelay] = RoundDelay;
-	ModeInfo[m_CT_BlockWeapon] = CT_BlockWeapons;
-	ModeInfo[m_TT_BlockWeapon] = TT_BlockWeapons;
-	ModeInfo[m_CT_BlockButtons] = CT_BlockButtons;
-	ModeInfo[m_TT_BlockButtons] = TT_BlockButtons;
-	ModeInfo[m_Bhop] = Bhop;
-	ModeInfo[m_Usp] = Usp;
-	ModeInfo[m_Hide] = Hide;
+	copy(eModeInfo[m_Name], charsmax(eModeInfo[m_Name]), Name);
+	eModeInfo[m_RoundDelay] = RoundDelay;
+	eModeInfo[m_CT_BlockWeapon] = CT_BlockWeapons;
+	eModeInfo[m_TT_BlockWeapon] = TT_BlockWeapons;
+	eModeInfo[m_CT_BlockButtons] = CT_BlockButtons;
+	eModeInfo[m_TT_BlockButtons] = TT_BlockButtons;
+	eModeInfo[m_Bhop] = Bhop;
+	eModeInfo[m_Usp] = Usp;
+	eModeInfo[m_Hide] = Hide;
 	
-	ArrayPushArray(g_aModes, ModeInfo);
+	ArrayPushArray(g_aModes, eModeInfo);
 	g_iModesNum++;
 	
 	return g_iModesNum;
@@ -183,14 +183,14 @@ public Event_NewRound()
 	g_eCurModeInfo[m_CT_BlockButtons] = 0;
 	g_eCurModeInfo[m_TT_BlockButtons] = 0;
 	
-	new ModeInfo[ModeData];
+	new eModeInfo[ModeData];
 	for(new i = 0; i < g_iModesNum; i++)
 	{
-		ArrayGetArray(g_aModes, i, ModeInfo);
-		if(ModeInfo[m_CurDelay])
+		ArrayGetArray(g_aModes, i, eModeInfo);
+		if(eModeInfo[m_CurDelay])
 		{
-			ModeInfo[m_CurDelay]--;
-			ArraySetArray(g_aModes, i, ModeInfo);
+			eModeInfo[m_CurDelay]--;
+			ArraySetArray(g_aModes, i, eModeInfo);
 		}
 	}
 	for(new id = 1; id <= g_iMaxPlayers; id++)
@@ -200,12 +200,12 @@ public Event_NewRound()
 }
 public Event_Restart()
 {
-	new ModeInfo[ModeData];
+	new eModeInfo[ModeData];
 	for(new i = 0; i < g_iModesNum; i++)
 	{
-		ArrayGetArray(g_aModes, i, ModeInfo);
-		ModeInfo[m_CurDelay] = 0;
-		ArraySetArray(g_aModes, i, ModeInfo);
+		ArrayGetArray(g_aModes, i, eModeInfo);
+		eModeInfo[m_CurDelay] = 0;
+		ArraySetArray(g_aModes, i, eModeInfo);
 	}
 }
 //***** Ham *****//
@@ -297,24 +297,24 @@ public Show_ModesMenu(id, iPage)
 	iPage = iStart / 8;
 	g_iPage[id] = iPage;
 	
-	new szMenu[512], iLen, Item, iKey, ModeInfo[ModeData];
+	new szMenu[512], iLen, Item, iKey, eModeInfo[ModeData];
 	
 	iLen = formatex(szMenu, charsmax(szMenu), "\ySelect mode:^n^n");
 	
 	for (i = iStart; i < iEnd; i++)
 	{
-		ArrayGetArray(g_aModes, i, ModeInfo);
+		ArrayGetArray(g_aModes, i, eModeInfo);
 		
-		if(ModeInfo[m_Hide]) continue;
+		if(eModeInfo[m_Hide]) continue;
 		
-		if(ModeInfo[m_CurDelay] > 0)
+		if(eModeInfo[m_CurDelay] > 0)
 		{
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\d%d. %s[\r%d\d]^n", ++Item, ModeInfo[m_Name], ModeInfo[m_CurDelay]);
+			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\d%d. %s[\r%d\d]^n", ++Item, eModeInfo[m_Name], eModeInfo[m_CurDelay]);
 		}
 		else
 		{
 			iKey |= (1 << Item);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r%d.\w %s^n", ++Item, ModeInfo[m_Name]);
+			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r%d.\w %s^n", ++Item, eModeInfo[m_Name]);
 		}
 	}
 	
@@ -444,11 +444,20 @@ public Task_MenuTimer(id)
 //*****  *****//
 bool:is_all_modes_blocked()
 {
-	new ModeInfo[ModeData];
+	new eModeInfo[ModeData];
 	for(new i; i < g_iModesNum; i++)
 	{
-		ArrayGetArray(g_aModes, i, ModeInfo);
-		if(!ModeInfo[m_CurDelay] && !ModeInfo[m_Hide]) return false;
+		ArrayGetArray(g_aModes, i, eModeInfo);
+		if(!eModeInfo[m_CurDelay] && !eModeInfo[m_Hide]) return false;
 	}
 	return true;
+}
+{
+	new count, eModeInfo[ModeData];
+	for(new i; i < last_mode; i++)
+	{
+		ArrayGetArray(g_aModes, i, eModeInfo);
+		if(eModeInfo[m_Hide]) count++;
+	}
+	return count;
 }
