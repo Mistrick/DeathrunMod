@@ -12,17 +12,18 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.6f"
+#define VERSION "0.7"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
 #define SHOW_MENU_FOR_LAST_CT
 
-#define PRESTART_TIME 5
+#define PRESTART_TIME 10
 #define FIRE_TIME 5
 #define DUEL_TIME 60
-#define MAX_DISTANCE 1500.0
+#define MAX_DISTANCE 1500
+#define MIN_DISTANCE 400
 
 enum (+=100)
 {
@@ -80,23 +81,26 @@ enum
 {
 	DUELTYPE_KNIFE = 0,
 	DUELTYPE_DEAGLE,
-	DUELTYPE_AWP
+	DUELTYPE_AWP,
+	DUELTYPE_AK47
 };
 enum
 {
 	TURNDUEL_DEAGLE = 0,
-	TURNDUEL_AWP
+	TURNDUEL_AWP,
+	TURNDUEL_AK47
 };
 
 new g_eDuelMenuItems[][] =
 {
 	"Knife",
 	"Deagle",
-	"AWP"
+	"AWP",
+	"AK47"
 };
 new g_eDuelWeaponWithTurn[][] =
 {
-	"weapon_deagle", "weapon_awp"
+	"weapon_deagle", "weapon_awp", "weapon_ak47"
 };
 
 public plugin_init()
@@ -421,6 +425,8 @@ DuelPreStart()
 		MovePlayerToSpawn(DUELIST_T);
 	}
 	
+	StopFuncConveyor();
+	
 	g_iDuelTimer = PRESTART_TIME + 1;
 	Task_PreStartTimer();
 	
@@ -438,6 +444,7 @@ public Task_PreStartTimer()
 	}
 	else
 	{
+		client_print(0, print_center, "Duel will start in %d seconds.", g_iDuelTimer);
 		set_task(1.0, "Task_PreStartTimer", TASK_PRESTART_TIMER);
 	}
 }
@@ -454,13 +461,9 @@ DuelStartForward(type)
 			give_item(g_iDuelPlayers[DUELIST_CT], "weapon_knife");
 			give_item(g_iDuelPlayers[DUELIST_T], "weapon_knife");
 		}
-		case DUELTYPE_DEAGLE:
+		case DUELTYPE_DEAGLE, DUELTYPE_AWP, DUELTYPE_AK47:
 		{
-			StartTurnDuel(TURNDUEL_DEAGLE);
-		}
-		case DUELTYPE_AWP:
-		{
-			StartTurnDuel(TURNDUEL_AWP);
+			StartTurnDuel(type - 1);
 		}
 	}
 	
@@ -551,7 +554,8 @@ CheckPlayersDistance()
 	{
 		return;
 	}
-	if(get_entity_distance(g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_T]) > MAX_DISTANCE)
+	new distance = get_entity_distance(g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_T]);
+	if(distance < MIN_DISTANCE || distance > MAX_DISTANCE)
 	{
 		MovePlayerToSpawn(DUELIST_CT);
 		MovePlayerToSpawn(DUELIST_T);
@@ -621,7 +625,11 @@ public Ham_PlayerKilled_Post(victim, killer)
 		new players[32], pnum; get_players(players, pnum, "aceh", "CT");
 		if(pnum == 1)
 		{
-			Show_DuelOffer(players[0]);
+			new ct = players[0]; get_players(players, pnum, "aceh", "TERRORIST");
+			if(pnum)
+			{
+				Show_DuelOffer(ct);
+			}
 		}
 	}
 	#endif
@@ -679,4 +687,29 @@ ResetDuel()
 	remove_task(TASK_PRESTART_TIMER);
 	remove_task(TASK_TURNCHANGER);
 	remove_task(TASK_DUELTIMER);
+	RestoreFuncConveyor();
+}
+StopFuncConveyor()
+{
+	new ent = -1;
+	while((ent = find_ent_by_class(ent, "func_conveyor")))
+	{
+		new Float:speed; pev(ent, pev_speed, speed);
+		set_pev(ent, pev_fuser1, speed);
+		set_pev(ent, pev_speed, 0.0);
+		new Float:vector[3]; pev(ent, pev_rendercolor, vector);
+		set_pev(ent, pev_vuser1, vector);
+		set_pev(ent, pev_rendercolor, Float:{0.0, 0.0, 0.0});
+	}
+}
+RestoreFuncConveyor()
+{
+	new ent = -1;
+	while((ent = find_ent_by_class(ent, "func_conveyor")))
+	{
+		new Float:speed; pev(ent, pev_fuser1, speed);
+		set_pev(ent, pev_speed, speed);
+		new Float:vector[3]; pev(ent, pev_vuser1, vector);
+		set_pev(ent, pev_rendercolor, vector);
+	}
 }
