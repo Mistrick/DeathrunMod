@@ -327,7 +327,7 @@ public Ham_TakeDamage_Pre(id, inflictor, attacker, Float:damage, damage_bits)
 {
 	if(damage_bits & DMG_FALL && get_pcvar_num(g_eCvars[BLOCK_FALLDMG]) && cs_get_user_team(id) == CS_TEAM_T)
 	{
-		HAM_SUPERCEDE;
+		return HAM_SUPERCEDE;
 	}
 	
 	return HAM_IGNORED;
