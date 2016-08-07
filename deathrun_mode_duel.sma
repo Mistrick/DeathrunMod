@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.7"
+#define VERSION "0.8"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -23,7 +23,7 @@
 #define FIRE_TIME 5
 #define DUEL_TIME 60
 #define MAX_DISTANCE 1500
-#define MIN_DISTANCE 400
+#define MIN_DISTANCE 300
 
 enum (+=100)
 {
@@ -60,6 +60,7 @@ new g_iDuelWeapon[2];
 new g_iDuelTurnTimer;
 new g_iDuelTimer;
 new g_iCurTurn;
+new g_iDuelMenu;
 
 new Float:g_fDuelSpawnOrigins[2][3];
 new Float:g_fDuelSpawnAngles[2][3];
@@ -76,6 +77,7 @@ new g_iColors[2][3] =
 
 new g_iForwards[DUEL_FORWARDS];
 new g_iReturn;
+new g_bSavedConveyorInfo;
 
 enum
 {
@@ -84,19 +86,19 @@ enum
 	DUELTYPE_AWP,
 	DUELTYPE_AK47
 };
-enum
-{
-	TURNDUEL_DEAGLE = 0,
-	TURNDUEL_AWP,
-	TURNDUEL_AK47
-};
-
 new g_eDuelMenuItems[][] =
 {
 	"Knife",
 	"Deagle",
 	"AWP",
 	"AK47"
+};
+
+enum
+{
+	TURNDUEL_DEAGLE = 0,
+	TURNDUEL_AWP,
+	TURNDUEL_AK47
 };
 new g_eDuelWeaponWithTurn[][] =
 {
@@ -139,6 +141,19 @@ public plugin_init()
 		.Usp = 0,
 		.Hide = 1
 	);
+	
+	Create_DuelMenu();
+	#if defined SHOW_MENU_FOR_LAST_CT
+	Create_DuelOfferMenu();
+	#endif
+}
+Create_DuelMenu()
+{
+	g_iDuelMenu = menu_create("Choose duel type:", "DuelType_Handler");
+	for(new i; i < sizeof(g_eDuelMenuItems); i++)
+	{
+		menu_additem(g_iDuelMenu, g_eDuelMenuItems[i]);
+	}
 }
 public plugin_cfg()
 {
@@ -367,23 +382,17 @@ public Command_Duel(id)
 {
 	if(g_bDuelStarted || !is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_CT) return PLUGIN_HANDLED;
 		
-	new players[32], pnum; get_players(players, pnum, "aceh", "CT");
+	new players[32], pnum; get_players(players, pnum, "ae", "CT");
 	if(pnum > 1) return PLUGIN_HANDLED;
 	
 	g_iDuelPlayers[DUELIST_CT] = id;
 	
-	get_players(players, pnum, "aceh", "TERRORIST");
+	get_players(players, pnum, "ae", "TERRORIST");
 	if(pnum < 1) return PLUGIN_HANDLED;
 	
 	g_iDuelPlayers[DUELIST_T] = players[0];
 	
-	new menu = menu_create("Choose duel type:", "DuelType_Handler");//make perm menu
-	for(new i; i < sizeof(g_eDuelMenuItems); i++)
-	{
-		menu_additem(menu, g_eDuelMenuItems[i]);
-	}
-	
-	menu_display(id, menu);
+	menu_display(id, g_iDuelMenu);
 	
 	return PLUGIN_HANDLED;
 }
@@ -391,14 +400,13 @@ public DuelType_Handler(id, menu, item)
 {
 	if(item == MENU_EXIT)
 	{
-		menu_destroy(menu);
 		return PLUGIN_HANDLED;
 	}
 	
-	new players[32], pnum; get_players(players, pnum, "aceh", "CT");
+	new players[32], pnum; get_players(players, pnum, "ae", "CT");
 	if(pnum > 1) return PLUGIN_HANDLED;
 	
-	get_players(players, pnum, "aceh", "TERRORIST");
+	get_players(players, pnum, "ae", "TERRORIST");
 	if(pnum < 1) return PLUGIN_HANDLED;
 	
 	if(!is_user_alive(id) || !is_user_alive(g_iDuelPlayers[DUELIST_T]) ||cs_get_user_team(id) != CS_TEAM_CT) return PLUGIN_HANDLED;
@@ -409,7 +417,6 @@ public DuelType_Handler(id, menu, item)
 	
 	DuelPreStart();
 	
-	menu_destroy(menu);
 	return PLUGIN_HANDLED;
 }
 DuelPreStart()
@@ -482,15 +489,11 @@ public Task_DuelTimer()
 	
 	if(--g_iDuelTimer <= 0)
 	{
-		g_bDuelStarted = false;
-		
 		ExecuteHamB(Ham_Killed, g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_CT], 0);
 		ExecuteHamB(Ham_Killed, g_iDuelPlayers[DUELIST_T], g_iDuelPlayers[DUELIST_T], 0);
 
-		g_iDuelPlayers[DUELIST_CT] = 0;
-		g_iDuelPlayers[DUELIST_T] = 0;
+		ResetDuel();
 		
-		remove_task(TASK_TURNCHANGER);
 		client_print_color(0, print_team_default, "%s^1 Duel time is over.", PREFIX);
 	}
 	else
@@ -615,17 +618,17 @@ public Ham_PlayerKilled_Post(victim, killer)
 		}
 		else
 		{
-			ResetDuel();
 			ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
 		}
+		ResetDuel();
 	}
 	#if defined SHOW_MENU_FOR_LAST_CT
 	else
 	{
-		new players[32], pnum; get_players(players, pnum, "aceh", "CT");
+		new players[32], pnum; get_players(players, pnum, "ae", "CT");
 		if(pnum == 1)
 		{
-			new ct = players[0]; get_players(players, pnum, "aceh", "TERRORIST");
+			new ct = players[0]; get_players(players, pnum, "ae", "TERRORIST");
 			if(pnum)
 			{
 				Show_DuelOffer(ct);
@@ -635,36 +638,31 @@ public Ham_PlayerKilled_Post(victim, killer)
 	#endif
 }
 #if defined SHOW_MENU_FOR_LAST_CT
+new g_iDuelOfferMenu;
+
+Create_DuelOfferMenu()
+{
+	g_iDuelOfferMenu = menu_create("Do you want start duel?", "DuelOffer_Handler");
+	
+	menu_additem(g_iDuelOfferMenu, "Yes");
+	menu_additem(g_iDuelOfferMenu, "No");
+	menu_setprop(g_iDuelOfferMenu, MPROP_PERPAGE, 0);
+}
 Show_DuelOffer(id)
 {
-	new iMenu = menu_create("Do you want start duel?", "DuelOffer_Handler");
-	
-	menu_additem(iMenu, "Yes");
-	menu_additem(iMenu, "No");
-	menu_setprop(iMenu, MPROP_PERPAGE, 0);
-	
-	menu_display(id, iMenu);
+	menu_display(id, g_iDuelOfferMenu);
 }
 public DuelOffer_Handler(id, menu, item)
 {
-	if(item == MENU_EXIT)
-	{
-		menu_destroy(menu);
-		return PLUGIN_HANDLED;
-	}
-	
 	if(item == 0)
 	{
 		Command_Duel(id);
 	}
-	
-	menu_destroy(menu);
 	return PLUGIN_HANDLED;
 }
 #endif
 FinishDuel(winner, looser)
 {
-	ResetDuel();
 	ExecuteForward(g_iForwards[DUEL_FINISH], g_iReturn, winner, looser);
 	
 	new szName[32]; get_user_name(winner, szName, charsmax(szName));
@@ -691,6 +689,7 @@ ResetDuel()
 }
 StopFuncConveyor()
 {
+	g_bSavedConveyorInfo = true;
 	new ent = -1;
 	while((ent = find_ent_by_class(ent, "func_conveyor")))
 	{
@@ -704,12 +703,15 @@ StopFuncConveyor()
 }
 RestoreFuncConveyor()
 {
-	new ent = -1;
-	while((ent = find_ent_by_class(ent, "func_conveyor")))
+	if(g_bSavedConveyorInfo)
 	{
-		new Float:speed; pev(ent, pev_fuser1, speed);
-		set_pev(ent, pev_speed, speed);
-		new Float:vector[3]; pev(ent, pev_vuser1, vector);
-		set_pev(ent, pev_rendercolor, vector);
+		new ent = -1;
+		while((ent = find_ent_by_class(ent, "func_conveyor")))
+		{
+			new Float:speed; pev(ent, pev_fuser1, speed);
+			set_pev(ent, pev_speed, speed);
+			new Float:vector[3]; pev(ent, pev_vuser1, vector);
+			set_pev(ent, pev_rendercolor, vector);
+		}
 	}
 }
