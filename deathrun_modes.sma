@@ -1,6 +1,5 @@
 #include <amxmodx>
 #include <cstrike>
-#include <fakemeta>
 #include <fakemeta_util>
 #include <hamsandwich>
 #include <deathrun_modes>
@@ -11,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.6"
+#define VERSION "0.7"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -20,11 +19,16 @@
 #define DEFAULT_USP 1
 #define TIMER 15
 
+enum (+=100)
+{
+	TASK_SHOWMENU = 100
+};
+
 enum _:ModeData
 {
 	m_Name[32],
 	m_RoundDelay,
-	m_CurDelay,	
+	m_CurDelay,
 	m_CT_BlockWeapon,
 	m_TT_BlockWeapon,
 	m_CT_BlockButtons,
@@ -162,6 +166,10 @@ public client_putinserver(id)
 {
 	g_bBhop[id] = true;
 }
+public client_disconnect(id)
+{
+	remove_task(id + TASK_SHOWMENU);
+}
 public Command_Bhop(id)
 {
 	if(!g_eCurModeInfo[m_Bhop]) return PLUGIN_CONTINUE;
@@ -195,7 +203,7 @@ public Event_NewRound()
 	}
 	for(new id = 1; id <= g_iMaxPlayers; id++)
 	{
-		remove_task(id);
+		remove_task(id + TASK_SHOWMENU);
 	}
 }
 public Event_Restart()
@@ -271,7 +279,8 @@ public Ham_PlayerSpawn_Post(id)
 	set_user_rendering(id);
 	
 	new CsTeams:iTeam = cs_get_user_team(id);
-	if(iTeam == CS_TEAM_CT && g_eCurModeInfo[m_Usp])
+	
+	if(g_eCurModeInfo[m_Usp] && iTeam == CS_TEAM_CT)
 	{
 		give_item(id, "weapon_usp");
 		cs_set_user_bpammo(id, CSW_USP, 100);
@@ -279,9 +288,9 @@ public Ham_PlayerSpawn_Post(id)
 	
 	if(g_iCurMode != NONE_MODE  || iTeam != CS_TEAM_T) return HAM_IGNORED;
 	
-	g_iTimer[id] = TIMER;
-	Show_ModesMenu(id, g_iPage[id] = 0);
-	set_task(1.0, "Task_MenuTimer", id, _, _, "a", TIMER);
+	g_iTimer[id] = TIMER + 1;
+	g_iPage[id] = 0;
+	Task_MenuTimer(id + TASK_SHOWMENU);
 	
 	return HAM_IGNORED;
 }
@@ -370,7 +379,7 @@ public ModesMenu_Handler(id, key)
 			
 			CheckUsp();
 			
-			remove_task(id);
+			remove_task(id + TASK_SHOWMENU);
 			ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);			
 			client_print_color(0, print_team_red, "%s^3 Terrorist^1 selected mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
 		}
@@ -380,11 +389,11 @@ public ModesMenu_Handler(id, key)
 }
 public Task_MenuTimer(id)
 {
+	id -= TASK_SHOWMENU;
+	
 	if(g_iCurMode != NONE_MODE || !is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_T)
 	{
-		remove_task(id);
-		show_menu(id, 0, "^n");
-		return;
+		show_menu(id, 0, "^n"); return;
 	}
 	if(--g_iTimer[id] <= 0)
 	{
@@ -394,14 +403,14 @@ public Task_MenuTimer(id)
 		
 		if(!is_all_modes_blocked())
 		{
-			do{
+			do {
 				iMode = random(g_iModesNum);
 				ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
 			} while(g_eCurModeInfo[m_CurDelay] || g_eCurModeInfo[m_Hide]);
 		}
 		else
 		{
-			do{
+			do {
 				iMode = random(g_iModesNum);
 				ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
 			} while(g_eCurModeInfo[m_Hide]);
@@ -421,6 +430,7 @@ public Task_MenuTimer(id)
 	else
 	{
 		Show_ModesMenu(id, g_iPage[id]);
+		set_task(1.0, "Task_MenuTimer", id + TASK_SHOWMENU);
 	}
 }
 CheckUsp()
@@ -428,13 +438,13 @@ CheckUsp()
 	#if DEFAULT_USP < 1
 	if(g_eCurModeInfo[m_Usp])
 	{
-	new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
-	for(new i = 0; i < pnum; i++)
-	{
-	player = players[i];
-	give_item(player, "weapon_usp");
-	cs_set_user_bpammo(player, CSW_USP, 100);
-	}
+		new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
+		for(new i = 0; i < pnum; i++)
+		{
+			player = players[i];
+			give_item(player, "weapon_usp");
+			cs_set_user_bpammo(player, CSW_USP, 100);
+		}
 	}
 	#else
 	if(!g_eCurModeInfo[m_Usp])
@@ -461,11 +471,11 @@ bool:is_all_modes_blocked()
 }
 get_hidden_modes(last_mode)
 {
-	new count, eModeInfo[ModeData];
-	for(new i; i < last_mode; i++)
-	{
-		ArrayGetArray(g_aModes, i, eModeInfo);
+	new i, count, eModeInfo[ModeData];
+	do {
+		ArrayGetArray(g_aModes, i++, eModeInfo);
 		if(eModeInfo[m_Hide]) count++;
-	}
+	} while(i <= last_mode || eModeInfo[m_Hide]);
+	
 	return count;
 }
