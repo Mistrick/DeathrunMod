@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.5"
+#define VERSION "0.6"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -368,28 +368,7 @@ public ModesMenu_Handler(id, key)
 			g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
 			ArraySetArray(g_aModes, iMode, g_eCurModeInfo);
 			
-			#if DEFAULT_USP < 1
-			if(g_eCurModeInfo[m_Usp])
-			{
-				new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
-				for(new i = 0; i < pnum; i++)
-				{
-					player = players[i];
-					give_item(player, "weapon_usp");
-					cs_set_user_bpammo(player, CSW_USP, 100);
-				}
-			}
-			#else
-			if(!g_eCurModeInfo[m_Usp])
-			{
-				new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
-				for(new i = 0; i < pnum; i++)
-				{
-					player = players[i];
-					fm_strip_user_gun(player, CSW_USP);
-				}
-			}
-			#endif
+			CheckUsp();
 			
 			remove_task(id);
 			ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);			
@@ -433,6 +412,8 @@ public Task_MenuTimer(id)
 		g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
 		ArraySetArray(g_aModes, iMode, g_eCurModeInfo);
 		
+		CheckUsp();
+		
 		ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);
 		
 		client_print_color(0, print_team_red, "%s^3 Random^1 mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
@@ -441,6 +422,31 @@ public Task_MenuTimer(id)
 	{
 		Show_ModesMenu(id, g_iPage[id]);
 	}
+}
+CheckUsp()
+{
+	#if DEFAULT_USP < 1
+	if(g_eCurModeInfo[m_Usp])
+	{
+	new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
+	for(new i = 0; i < pnum; i++)
+	{
+	player = players[i];
+	give_item(player, "weapon_usp");
+	cs_set_user_bpammo(player, CSW_USP, 100);
+	}
+	}
+	#else
+	if(!g_eCurModeInfo[m_Usp])
+	{
+		new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
+		for(new i = 0; i < pnum; i++)
+		{
+			player = players[i];
+			fm_strip_user_gun(player, CSW_USP);
+		}
+	}
+	#endif
 }
 //*****  *****//
 bool:is_all_modes_blocked()

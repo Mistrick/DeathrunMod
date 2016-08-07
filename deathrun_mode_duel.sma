@@ -491,7 +491,8 @@ public Task_DuelTimer()
 	{
 		ExecuteHam(Ham_Killed, g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_CT], 0);
 		ExecuteHam(Ham_Killed, g_iDuelPlayers[DUELIST_T], g_iDuelPlayers[DUELIST_T], 0);
-
+		
+		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
 		ResetDuel();
 		
 		client_print_color(0, print_team_default, "%s^1 Duel time is over.", PREFIX);
