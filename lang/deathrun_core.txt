@@ -1,0 +1,9 @@
+[en]
+DRC_TERRORIST_LEFT = ^3%s^1 has left the server.^3 %s^1 became a terrorist.
+DRC_BECAME_TERRORIST = ^3%s^1 became a terrorist.
+DRBC_CANT_USE = You can't use this button!
+
+[ru]
+DRC_TERRORIST_LEFT = ^3%s^1 отключился от сервера.^3 %s^1 стал террористом.
+DRC_BECAME_TERRORIST = ^3%s^1 стал террористом.
+DRBC_CANT_USE = Вы не можете использовать эту кнопку!

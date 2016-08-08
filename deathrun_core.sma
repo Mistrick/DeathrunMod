@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "0.7"
+#define VERSION "0.8"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -123,6 +123,10 @@ public FakeMeta_Spawn_Pre(ent)
 	}
 	return FMRES_IGNORED;
 }
+public plugin_cfg()
+{
+	register_dictionary("deathrun_core.txt");
+}
 public plugin_natives()
 {
 	register_native("dr_get_terrorist", "native_get_terrorist", 1);
@@ -159,7 +163,7 @@ public client_disconnect(id)
 			
 			new szName[32]; get_user_name(g_iTerrorist, szName, charsmax(szName));
 			new szNameLeaver[32]; get_user_name(id, szNameLeaver, charsmax(szNameLeaver));
-			client_print_color(0, print_team_red, "%s^3 %s^1 has left the server.^3 %s^1 became a terrorist.", PREFIX, szNameLeaver, szName);
+			client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRC_TERRORIST_LEFT", szNameLeaver, szName);
 		}
 		else
 		{
@@ -218,7 +222,7 @@ TeamBalance()
 		if(iPlayer != g_iTerrorist) cs_set_user_team(iPlayer, CS_TEAM_CT);
 	}
 	new szName[32]; get_user_name(g_iTerrorist, szName, charsmax(szName));
-	client_print_color(0, print_team_red, "%s^3 %s^1 became a terrorist.", PREFIX, szName);
+	client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRC_BECAME_TERRORIST", szName);
 }
 public Event_RoundStart()
 {
@@ -243,9 +247,7 @@ public Message_Menu(const msg, const nDest, const nClient)
 	
 	if (msg == g_msgShowMenu)
 	{
-		new szMsg[13];
-		get_msg_arg_string(4, szMsg, charsmax(szMsg));
-
+		new szMsg[13]; get_msg_arg_string(4, szMsg, charsmax(szMsg));
 		if (!equal(szMsg, "#Team_Select"))
 		{
 			return PLUGIN_CONTINUE;
@@ -256,7 +258,6 @@ public Message_Menu(const msg, const nDest, const nClient)
 		return PLUGIN_CONTINUE;
 	}
 
-	// safe checks
 	if (get_pdata_int(nClient, m_iMenu) == Menu_ChooseTeam || get_pdata_int(nClient, m_iJoiningState) != SHOWTEAMSELECT)
 	{
 		return PLUGIN_CONTINUE;

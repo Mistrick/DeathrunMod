@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.7"
+#define VERSION "0.8"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -37,7 +37,7 @@ enum _:ModeData
 	m_TT_BlockButtons,
 	m_Bhop,
 	m_Usp,
-	m_Hide//add min max players
+	m_Hide
 };
 
 #define NONE_MODE -1
@@ -98,7 +98,10 @@ public plugin_init()
 	g_eCurModeInfo[m_Bhop] = DEFAULT_BHOP;
 	g_eCurModeInfo[m_Usp] = DEFAULT_USP;
 }
-
+public plugin_cfg()
+{
+	register_dictionary("deathrun_modes.txt");
+}
 public plugin_natives()
 {
 	register_library("deathrun_modes");
@@ -177,7 +180,7 @@ public Command_Bhop(id)
 	if(!g_eCurModeInfo[m_Bhop]) return PLUGIN_CONTINUE;
 	
 	g_bBhop[id] = !g_bBhop[id];
-	client_print_color(id, print_team_default, "%s^1 Bhop is^3 %s^1.", PREFIX, g_bBhop[id] ? "enabled" : "disabled");
+	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRM_BHOP_MSG", LANG_PLAYER, g_bBhop[id] ? "DRM_ENABLED" : "DRM_DISABLED");
 	
 	return PLUGIN_CONTINUE;
 }
@@ -250,7 +253,7 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 	{
 		dr_set_mode(g_iModeButtons, 1, activator);
 		show_menu(activator, 0, "^n");
-		client_print_color(0, print_team_red, "%s^3 Terrorist^1 used button. Mode: ^4Buttons^1.", PREFIX);
+		client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_USED_BUTTON");
 		return HAM_IGNORED;
 	}
 	
@@ -310,7 +313,7 @@ public Show_ModesMenu(id, iPage)
 	
 	new szMenu[512], iLen, Item, iKey, eModeInfo[ModeData];
 	
-	iLen = formatex(szMenu, charsmax(szMenu), "\ySelect mode:^n^n");
+	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", LANG_PLAYER, "DRM_MENU_SELECT_MODE");
 	
 	for (i = iStart; i < iEnd; i++)
 	{
@@ -340,21 +343,21 @@ public Show_ModesMenu(id, iPage)
 		if (iEnd < iMax)
 		{
 			iKey |= (1 << 8);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n\r9.\w Next^n");
+			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n\r9.\w %L^n", LANG_PLAYER, "DRM_MENU_NEXT");
 			if(iPage)
 			{
 				iKey |= (1 << 9);
-				iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r0.\w Back^n");
+				iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r0.\w %L^n", LANG_PLAYER, "DRM_MENU_BACK");
 			}
 		}
 		else if(iPage)
 		{
 			iKey |= (1 << 9);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n^n\r0.\w Back^n");
+			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n^n\r0.\w %L^n", LANG_PLAYER, "DRM_MENU_BACK");
 		}
 	}
 	
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n\dYou have \r%d \dseconds.", g_iTimer[id]);
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n%L", LANG_PLAYER, "DRM_MENU_TIMELEFT", g_iTimer[id]);
 	
 	show_menu(id, iKey, szMenu, -1, "ModesMenu");
 	
@@ -383,7 +386,7 @@ public ModesMenu_Handler(id, key)
 			
 			remove_task(id + TASK_SHOWMENU);
 			ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);			
-			client_print_color(0, print_team_red, "%s^3 Terrorist^1 selected mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
+			client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", g_eCurModeInfo[m_Name]);
 		}
 	}
 	
@@ -427,7 +430,7 @@ public Task_MenuTimer(id)
 		
 		ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);
 		
-		client_print_color(0, print_team_red, "%s^3 Random^1 mode:^4 %s^1.", PREFIX, g_eCurModeInfo[m_Name]);
+		client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", g_eCurModeInfo[m_Name]);
 	}
 	else
 	{

@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.5"
+#define VERSION "0.6"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -18,7 +18,7 @@
 #define UPDATE_INTERVAL 1.0
 //#define DONT_SHOW_FOR_ALIVE
 
-new const PREFIX[] = "[DRI]";
+new const PREFIX[] = "^4[DRI]";
 
 new g_szCurMode[32], g_iConnectedCount, g_iMaxPlayers, g_iHudInformer, g_iHudSpecList, g_iHudSpeed;
 new bool:g_bConnected[33], bool:g_bAlive[33], bool:g_bInformer[33], bool:g_bSpeed[33], bool:g_bSpecList[33];
@@ -50,6 +50,10 @@ public plugin_init()
 	set_task(UPDATE_INTERVAL, "Task_ShowInfo", .flags = "b");
 	set_task(0.1, "Task_ShowSpeed", .flags = "b");
 }
+public plugin_cfg()
+{
+	register_dictionary("deathrun_informer.txt");
+}
 public client_putinserver(id)
 {
 	g_bConnected[id] = true;
@@ -68,17 +72,17 @@ public client_disconnect(id)
 public Command_Informer(id)
 {
 	g_bInformer[id] = !g_bInformer[id];
-	client_print_color(id, print_team_default, "^4%s^1 Informer is^3 %s^1.", PREFIX, g_bInformer[id] ? "enabled" : "disabled");
+	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRI_INFORMER_MSG", g_bInformer[id] ? "DRI_ENABLED" : "DRI_DISABLED");
 }
 public Command_SpecList(id)
 {
 	g_bSpecList[id] = !g_bSpecList[id];
-	client_print_color(id, print_team_default, "^4%s^1 Speclist is^3 %s^1.", PREFIX, g_bSpecList[id] ? "enabled" : "disabled");
+	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRI_SPECLIST_MSG", g_bSpecList[id] ? "DRI_ENABLED" : "DRI_DISABLED");
 }
 public Command_Speed(id)
 {
 	g_bSpeed[id] = !g_bSpeed[id];
-	client_print_color(id, print_team_default, "^4%s^1 Speedometer is^3 %s^1.", PREFIX, g_bSpeed[id] ? "enabled" : "disabled");
+	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRI_SPEEDOMETER_MSG", g_bSpeed[id] ? "DRI_ENABLED" : "DRI_DISABLED");
 }
 //***** Events *****//
 public Event_RoundStart()
@@ -123,12 +127,12 @@ public Task_FramesCount()
 public Task_ShowInfo()
 {
 	new szName[32], szInformer[256], iLen = 0, iTimeLeft = get_timeleft();
-	iLen = formatex(szInformer, charsmax(szInformer), "Mode: %s^n", g_szCurMode);
-	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "Timeleft: %02d:%02d^n", iTimeLeft / 60, iTimeLeft % 60);
+	iLen = formatex(szInformer, charsmax(szInformer), "%L: %s^n", LANG_PLAYER, "DRI_MODE", g_szCurMode);
+	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", LANG_PLAYER, "DRI_TIMELEFT", iTimeLeft / 60, iTimeLeft % 60);
 		
 	new iAlive, iCount; get_ct(iAlive, iCount);
-	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "Alive CT: %d/%d^n", iAlive, iCount);
-	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "All Players: %d/%d", g_iConnectedCount, g_iMaxPlayers);	
+	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", LANG_PLAYER, "DRI_ALIVECT", iAlive, iCount);
+	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L", LANG_PLAYER, "DRI_ALL_PLAYERS", g_iConnectedCount, g_iMaxPlayers);	
 
 	static szSpecInfo[1152];
 	for(new id = 1; id <= g_iMaxPlayers; id++)
@@ -146,12 +150,12 @@ public Task_ShowInfo()
 		if(g_iHealth[id] >= 255)
 		{
 			set_dhudmessage(55, 245, 55, 0.02, 0.90, 0, _, UPDATE_INTERVAL - 0.05, _, _, false);
-			show_dhudmessage(id, "Health: %d", g_iHealth[id]);
+			show_dhudmessage(id, "%L", LANG_PLAYER, "DRI_HEALTH", g_iHealth[id]);
 		}
 		
 		new bool:bShowInfo[33];
 		get_user_name(id, szName, charsmax(szName));
-		iLen = formatex(szSpecInfo, charsmax(szSpecInfo), "Player: %s^nHealth: %dHP, Money: $%d, FPS: %d^n", szName, g_iHealth[id], g_iMoney[id], g_iPlayerFps[id]);
+		iLen = formatex(szSpecInfo, charsmax(szSpecInfo), "%L^n", LANG_PLAYER, "DRI_SPECLIST", szName, g_iHealth[id], g_iMoney[id], g_iPlayerFps[id]);
 		
 		for(new dead = 1; dead <= g_iMaxPlayers; dead++)
 		{
@@ -197,7 +201,7 @@ public Task_ShowSpeed()
 		fSpeed = vector_length(fVelocity);
 		
 		set_hudmessage(0, 55, 255, -1.0, 0.7, 0, _, 0.1, _, _, 2);
-		ShowSyncHudMsg(id, g_iHudSpeed, "Speed: %3.2f", fSpeed);
+		ShowSyncHudMsg(id, g_iHudSpeed, "%L", LANG_PLAYER, "DRI_SPEEDOMETER", fSpeed);
 	}
 }
 //********
@@ -210,7 +214,7 @@ stock get_ct(&alive, &count)
 	count = 0; alive = 0;
 	for(new id = 1; id <= g_iMaxPlayers; id++)
 	{
-		if(g_bConnected[id] && get_user_team(id) == 2)
+		if(g_bConnected[id] && cs_get_user_team(id) == CS_TEAM_CT)
 		{
 			count++;
 			if(g_bAlive[id]) alive++;

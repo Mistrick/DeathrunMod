@@ -1,0 +1,23 @@
+[en]
+DRM_BHOP_MSG = Bhop is^3 %L^1.
+DRM_ENABLED = enabled
+DRM_DISABLED = disabled
+DRM_USED_BUTTON = ^3Terrorist^1 used button. Mode: ^4Buttons^1.
+DRM_MENU_SELECT_MODE = \ySelect mode:
+DRM_MENU_NEXT = Next
+DRM_MENU_BACK = Back
+DRM_MENU_TIMELEFT = \dYou have \r%d \dseconds.
+DRM_SELECTED_MODE = ^3Terrorist^1 selected mode:^4 %s^1.
+DRM_RANDOM_MODE = ^3Random^1 mode:^4 %s^1.
+
+[ru]
+DRM_BHOP_MSG = Bhop^3 %L^1.
+DRM_ENABLED = включен
+DRM_DISABLED = выключен
+DRM_USED_BUTTON = ^Террорист^1 использовал кнопку. Режим: ^4Buttons^1.
+DRM_MENU_SELECT_MODE = \yВыберите режим:
+DRM_MENU_NEXT = Дальше
+DRM_MENU_BACK = Назад
+DRM_MENU_TIMELEFT = \dУ вас осталось \r%d \dсек.
+DRM_SELECTED_MODE = ^3Террорист^1 выбрал режим:^4 %s^1.
+DRM_RANDOM_MODE = ^3Случайный^1 режим:^4 %s^1.

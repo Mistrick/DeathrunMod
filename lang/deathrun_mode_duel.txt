@@ -1,0 +1,21 @@
+[en]
+DRD_SET_SPAWNS = You must set two spawns.
+DRD_SPAWNS_SAVED = Spawns saved.
+DRD_DUEL_START_TIME = Duel will start in ^3%d seconds.
+DRD_TIME_OVER = Duel time is over.
+DRD_SHOOT_TIME = You have %d seconds.
+DRD_DUEL_OFFER = \yDo you want start duel?
+DRD_YES = Yes
+DRD_NO = No
+DRD_DUEL_WINNER = Duel winner is^3 %s^1.
+
+[ru]
+DRD_SET_SPAWNS = Вы должны установить две точки спавна.
+DRD_SPAWNS_SAVED = Точки спавна сохранены.
+DRD_DUEL_START_TIME = Дуэль начнется через ^3%d сек.
+DRD_TIME_OVER = Время дуэли закончилось.
+DRD_SHOOT_TIME = У вас осталось %d сек.
+DRD_DUEL_OFFER = \yХотите начать дуэль?
+DRD_YES = Да
+DRD_NO = Нет
+DRD_DUEL_WINNER = Победитель дуэли^3 %s^1.

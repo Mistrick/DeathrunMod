@@ -34,6 +34,7 @@ public plugin_init()
 {
 	register_plugin(PLUGIN, VERSION, AUTHOR);
 	register_event("HLTV", "Event_NewRound", "a", "1=0", "2=0");
+	register_dictionary("deathrun_core.txt");
 	LoadButtons();
 }
 LoadButtons()
@@ -103,7 +104,7 @@ public Ham_ButtonUse_Pre(ent, caller, activator, use_type)
 	
 	if(g_iButtonsUsed[index] >= BUTTON_MAX_USE)
 	{
-		client_print(caller, print_center, "You can't use this button!");
+		client_print(caller, print_center, "%L", LANG_PLAYER, "DRBC_CANT_USE");
 		return HAM_SUPERCEDE;
 	}
 	

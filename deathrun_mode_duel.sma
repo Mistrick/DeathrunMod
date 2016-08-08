@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.8"
+#define VERSION "0.9"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -144,7 +144,7 @@ public plugin_init()
 	
 	Create_DuelMenu();
 	#if defined SHOW_MENU_FOR_LAST_CT
-	Create_DuelOfferMenu();
+	register_menucmd(register_menuid("DuelOfferMenu"), 1023, "DuelOffer_Handler");
 	#endif
 }
 Create_DuelMenu()
@@ -157,6 +157,7 @@ Create_DuelMenu()
 }
 public plugin_cfg()
 {
+	register_dictionary("deathrun_mode_duel.txt");
 	LoadSpawns();
 }
 LoadSpawns()
@@ -360,7 +361,7 @@ SaveSpawns(id)
 {
 	if(!g_bSetSpawn[DUELIST_CT] || !g_bSetSpawn[DUELIST_T])
 	{
-		client_print_color(id, print_team_default, "^%s^1 You must set two spawns.", PREFIX);
+		client_print_color(id, print_team_default, "^%s^1 %L", PREFIX, LANG_PLAYER, "DRD_SET_SPAWNS");
 		return;
 	}
 	if(file_exists(g_szSpawnsFile))
@@ -375,7 +376,7 @@ SaveSpawns(id)
 		fclose(file);
 		g_bLoadedSpawns = true;
 		GetSpawnAngles();
-		client_print_color(id, print_team_default, "%s^1 Spawns saved.", PREFIX);
+		client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRD_SPAWNS_SAVED");
 	}
 }
 public Command_Duel(id)
@@ -439,7 +440,7 @@ DuelPreStart()
 	
 	ExecuteForward(g_iForwards[DUEL_PRESTART], g_iReturn, g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_T]);
 	
-	client_print_color(0, print_team_default, "%s^1 Duel will start in ^3%d seconds.", PREFIX, PRESTART_TIME);
+	client_print_color(0, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRD_DUEL_START_TIME", PRESTART_TIME);
 }
 public Task_PreStartTimer()
 {
@@ -451,7 +452,7 @@ public Task_PreStartTimer()
 	}
 	else
 	{
-		client_print(0, print_center, "Duel will start in %d seconds.", g_iDuelTimer);
+		client_print(0, print_center, "%L", LANG_PLAYER, "DRD_DUEL_START_TIME", g_iDuelTimer);
 		set_task(1.0, "Task_PreStartTimer", TASK_PRESTART_TIMER);
 	}
 }
@@ -495,7 +496,7 @@ public Task_DuelTimer()
 		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
 		ResetDuel();
 		
-		client_print_color(0, print_team_default, "%s^1 Duel time is over.", PREFIX);
+		client_print_color(0, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRD_TIME_OVER");
 	}
 	else
 	{
@@ -534,7 +535,7 @@ public Task_ChangeTurn()
 	
 	if(g_iDuelTurnTimer > 0)
 	{
-		client_print(g_iDuelPlayers[g_iCurTurn], print_center, "You have %d seconds.", g_iDuelTurnTimer);
+		client_print(g_iDuelPlayers[g_iCurTurn], print_center, "%L", LANG_PLAYER, "DRD_SHOOT_TIME", g_iDuelTurnTimer);
 	}
 	else
 	{
@@ -639,19 +640,15 @@ public Ham_PlayerKilled_Post(victim, killer)
 	#endif
 }
 #if defined SHOW_MENU_FOR_LAST_CT
-new g_iDuelOfferMenu;
-
-Create_DuelOfferMenu()
-{
-	g_iDuelOfferMenu = menu_create("Do you want start duel?", "DuelOffer_Handler");
-	
-	menu_additem(g_iDuelOfferMenu, "Yes");
-	menu_additem(g_iDuelOfferMenu, "No");
-	menu_setprop(g_iDuelOfferMenu, MPROP_PERPAGE, 0);
-}
 Show_DuelOffer(id)
 {
-	menu_display(id, g_iDuelOfferMenu);
+	new szMenu[256], iLen;
+	
+	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", LANG_PLAYER, "DRD_DUEL_OFFER");
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r1.\w %L^n", LANG_PLAYER, "DRD_YES");
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r2.\w %L", LANG_PLAYER, "DRD_NO");
+	
+	show_menu(id, (1 << 0)|(1 << 1), szMenu, -1, "DuelOfferMenu");
 }
 public DuelOffer_Handler(id, menu, item)
 {
@@ -667,7 +664,7 @@ FinishDuel(winner, looser)
 	ExecuteForward(g_iForwards[DUEL_FINISH], g_iReturn, winner, looser);
 	
 	new szName[32]; get_user_name(winner, szName, charsmax(szName));
-	client_print_color(0, winner, "%s^1 Duel winner is^3 %s^1.", PREFIX, szName);
+	client_print_color(0, winner, "%s^1 %L", PREFIX, LANG_PLAYER, "DRD_DUEL_WINNER", szName);
 }
 public dr_selected_mode(id, mode)
 {

@@ -1,0 +1,11 @@
+[en]
+DRL_LIFE_MENU = \yLife Menu\w[Lifes: \r%d\w]\y:
+DRL_RESPAWN = Respawn
+DRL_EXIT = Exit
+DRL_CANT_RESPAWN = You can't respawn.
+
+[кг]
+DRL_LIFE_MENU = \yМеню жизней\w[Жизни: \r%d\w]\y:
+DRL_RESPAWN = Воскреситься
+DRL_EXIT = Выйти
+DRL_CANT_RESPAWN = Вы не можете воскреситься.

@@ -1,0 +1,27 @@
+[en]
+DRI_INFORMER_MSG = Informer is^3 %L^1.
+DRI_SPECLIST_MSG = Speclist is^3 %L^1.
+DRI_SPEEDOMETER_MSG = Speedometer is^3 %L^1.
+DRI_ENABLED = enabled
+DRI_DISABLED = disabled
+DRI_MODE = Mode
+DRI_TIMELEFT = Timeleft: %02d:%02d
+DRI_ALIVECT = Alive CT: %d/%d
+DRI_ALL_PLAYERS = All Players: %d/%d
+DRI_HEALTH = Health: %d
+DRI_SPECLIST = Player: %s^nHealth: %dHP, Money: $%d, FPS: %d
+DRI_SPEEDOMETER = Speed: %3.2f
+
+[ru]
+DRI_INFORMER_MSG = Информер^3 %L^1.
+DRI_SPECLIST_MSG = Список наблюдателей^3 %L^1.
+DRI_SPEEDOMETER_MSG = Спидометр^3 %L^1.
+DRI_ENABLED = включен
+DRI_DISABLED = выключен
+DRI_MODE = Режим
+DRI_TIMELEFT = Осталось: %02d:%02d
+DRI_ALIVECT = Живых КТ: %d/%d
+DRI_ALL_PLAYERS = Всего игроков: %d/%d
+DRI_HEALTH = Health: %d
+DRI_SPECLIST = Игрок: %s^nHealth: %dHP, Деньги: $%d, FPS: %d
+DRI_SPEEDOMETER = Скорость: %3.2f

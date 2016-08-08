@@ -7,7 +7,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Lifes"
-#define VERSION "0.2"
+#define VERSION "0.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -15,7 +15,7 @@
 #define ADD_LIFES 1
 #define ALIVE_CT_TO_RESPAWN 3
 
-new const PREFIX[] = "[DL]";
+new const PREFIX[] = "^4[DRL]";
 new g_iLifes[33], g_iMaxPlayers;
 
 public plugin_init()
@@ -30,6 +30,10 @@ public plugin_init()
 	register_menucmd(register_menuid("LifeMenu"), 1023, "LifeMenu_Handler");
 	
 	g_iMaxPlayers = get_maxplayers();
+}
+public plugin_cfg()
+{
+	register_dictionary("deathrun_lifes.txt");
 }
 public plugin_natives()
 {
@@ -63,9 +67,9 @@ public Show_LifeMenu(id)
 {
 	new szMenu[256], iLen;
 	
-	iLen = formatex(szMenu, charsmax(szMenu), "\yLife Menu\w[Lifes: \r%d\w]\y:^n^n", g_iLifes[id]);
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r1.\w Respawn^n");
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r2.\w Exit");
+	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", LANG_PLAYER, "DRL_LIFE_MENU", g_iLifes[id]);
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r1.\w %L^n", LANG_PLAYER, "DRL_RESPAWN");
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r2.\w %L", LANG_PLAYER, "DRL_EXIT");
 	
 	show_menu(id, (1 << 0)|(1 << 1), szMenu, -1, "LifeMenu");
 }
@@ -82,7 +86,7 @@ public LifeMenu_Handler(id, key)
 			}
 			else
 			{
-				client_print_color(id, print_team_default, "^4%s^1 You can't respawn.", PREFIX);
+				client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRL_CANT_RESPAWN");
 			}
 		}
 	}
@@ -90,6 +94,6 @@ public LifeMenu_Handler(id, key)
 }
 alive_ct()
 {
-	new players[32], pnum; get_players(players, pnum, "ache", "CT");
+	new players[32], pnum; get_players(players, pnum, "ae", "CT");
 	return pnum;
 }
