@@ -19,6 +19,8 @@
 #define DEFAULT_USP 1
 #define TIMER 15
 
+#define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
+
 enum (+=100)
 {
 	TASK_SHOWMENU = 100
@@ -240,7 +242,7 @@ public Ham_PlayerJump_Pre(id)
 }
 public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 {
-	if(activator == 0 || activator > 32) return HAM_IGNORED;
+	if(!IsPlayer(activator)) return HAM_IGNORED;
 	
 	new CsTeams:iTeam = cs_get_user_team(activator);
 	
@@ -261,7 +263,7 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 }
 public Ham_TouchItems_Pre(ent, id)
 {
-	if(!(id && id <= g_iMaxPlayers) || g_iCurMode < 0) return HAM_IGNORED;
+	if(!IsPlayer(id) || g_iCurMode < 0) return HAM_IGNORED;
 	
 	new CsTeams:iTeam = cs_get_user_team(id);
 	

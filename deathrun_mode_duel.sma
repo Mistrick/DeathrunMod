@@ -390,8 +390,6 @@ public Command_Duel(id)
 	get_players(players, pnum, "ae", "TERRORIST");
 	if(pnum < 1) return PLUGIN_HANDLED;
 	
-	g_iDuelPlayers[DUELIST_T] = players[0];
-	
 	menu_display(id, g_iDuelMenu);
 	
 	return PLUGIN_HANDLED;
@@ -408,6 +406,8 @@ public DuelType_Handler(id, menu, item)
 	
 	get_players(players, pnum, "ae", "TERRORIST");
 	if(pnum < 1) return PLUGIN_HANDLED;
+	
+	g_iDuelPlayers[DUELIST_T] = players[0];
 	
 	if(!is_user_alive(id) || !is_user_alive(g_iDuelPlayers[DUELIST_T]) ||cs_get_user_team(id) != CS_TEAM_CT) return PLUGIN_HANDLED;
 	

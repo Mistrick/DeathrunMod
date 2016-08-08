@@ -16,7 +16,7 @@
 
 #pragma semicolon 1
 
-#define IsPlayer(%1) (%1 && %1 <= 32)
+#define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
 
 #define WARMUP_TIME 15.0
 
@@ -228,7 +228,7 @@ TerroristCheck()
 {
 	if(!is_user_connected(g_iTerrorist))
 	{
-		new players[32], pnum; get_players(players, pnum, "ace", "TERRORIST");
+		new players[32], pnum; get_players(players, pnum, "ae", "TERRORIST");
 		g_iTerrorist = pnum ? players[0] : 0;
 	}	
 }
@@ -329,7 +329,6 @@ public Ham_TakeDamage_Pre(id, inflictor, attacker, Float:damage, damage_bits)
 	{
 		return HAM_SUPERCEDE;
 	}
-	
 	return HAM_IGNORED;
 }
 public Ham_PlayerPreThink_Post(id)
@@ -379,7 +378,7 @@ stock _get_players(players[32], bool:alive = false)
 }
 stock _get_alive_players()
 {
-	new players[32], pnum; get_players(players, pnum, "ach");
+	new players[32], pnum; get_players(players, pnum, "a");
 	return pnum;
 }
 stock block_user_radio(id)
