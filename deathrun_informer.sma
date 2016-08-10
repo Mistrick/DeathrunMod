@@ -149,7 +149,7 @@ public Task_ShowInfo()
 		
 		if(g_iHealth[id] >= 255)
 		{
-			set_dhudmessage(55, 245, 55, 0.02, 0.90, 0, _, UPDATE_INTERVAL - 0.05, _, _, false);
+			set_dhudmessage(55, 245, 55, 0.02, 0.90, 0, _, UPDATE_INTERVAL - 0.05);
 			show_dhudmessage(id, "%L", LANG_PLAYER, "DRI_HEALTH", g_iHealth[id]);
 		}
 		
