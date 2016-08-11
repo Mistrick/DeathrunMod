@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.9"
+#define VERSION "0.10"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -68,6 +68,7 @@ new g_bShowSpawns;
 new g_bLoadedSpawns;
 new g_szSpawnsFile[128];
 new g_bSetSpawn[2];
+new g_iMinDistance;
 
 new g_iColors[2][3] = 
 {
@@ -204,6 +205,12 @@ LoadSpawns()
 	{
 		mkdir(szDir);
 		FindSpawns();
+	}
+	
+	if(g_bLoadedSpawns)
+	{
+		new Float:fDistance = get_distance_f(g_fDuelSpawnOrigins[DUELIST_CT], g_fDuelSpawnOrigins[DUELIST_T]);
+		g_iMinDistance = fDistance < MIN_DISTANCE ? floatround(fDistance - 32.0) : MIN_DISTANCE;
 	}
 }
 FindSpawns()
@@ -560,7 +567,7 @@ CheckPlayersDistance()
 		return;
 	}
 	new distance = get_entity_distance(g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_T]);
-	if(distance < MIN_DISTANCE || distance > MAX_DISTANCE)
+	if(distance < g_iMinDistance || distance > MAX_DISTANCE)
 	{
 		MovePlayerToSpawn(DUELIST_CT);
 		MovePlayerToSpawn(DUELIST_T);

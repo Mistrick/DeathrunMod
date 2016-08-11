@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.6"
+#define VERSION "0.7"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -66,6 +66,7 @@ public client_disconnect(id)
 {
 	g_bConnected[id] = false;
 	g_bAlive[id] = false;
+	g_bSpeed[id] = false;
 	g_iConnectedCount--;
 }
 //***** Commands *****//
