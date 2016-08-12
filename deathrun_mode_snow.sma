@@ -8,7 +8,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "0.3"
+#define VERSION "0.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -201,7 +201,7 @@ SnowBallTakeDamage(snowball, player)
 		if(is_user_alive(player) && cs_get_user_team(player) != cs_get_user_team(owner))
 		{
 			ExecuteHamB(Ham_TakeDamage, player, snowball, owner, SNOWBALL_DAMAGE, 0);
-			set_pev(snowball, pev_flags, pev(snowball, pev_flags) | FL_KILLME);
+			engfunc(EngFunc_RemoveEntity, snowball);
 			return 1;
 		}
 	}
