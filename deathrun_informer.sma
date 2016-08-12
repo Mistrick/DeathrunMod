@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.7"
+#define VERSION "0.8"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -128,20 +128,20 @@ public Task_FramesCount()
 public Task_ShowInfo()
 {
 	new szName[32], szInformer[256], iLen = 0, iTimeLeft = get_timeleft();
-	iLen = formatex(szInformer, charsmax(szInformer), "%L: %s^n", LANG_PLAYER, "DRI_MODE", g_szCurMode);
-	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", LANG_PLAYER, "DRI_TIMELEFT", iTimeLeft / 60, iTimeLeft % 60);
-		
 	new iAlive, iCount; get_ct(iAlive, iCount);
-	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", LANG_PLAYER, "DRI_ALIVECT", iAlive, iCount);
-	iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L", LANG_PLAYER, "DRI_ALL_PLAYERS", g_iConnectedCount, g_iMaxPlayers);	
 
-	static szSpecInfo[1152];
+	static szSpecInfo[256], szSpecList[1024];
 	for(new id = 1; id <= g_iMaxPlayers; id++)
 	{
 		if(!g_bConnected[id]) continue;
 		
 		if(g_bInformer[id])
 		{
+			iLen = formatex(szInformer, charsmax(szInformer), "%L: %s^n", id, "DRI_MODE", g_szCurMode);
+			iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", id, "DRI_TIMELEFT", iTimeLeft / 60, iTimeLeft % 60);
+			iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", id, "DRI_ALIVECT", iAlive, iCount);
+			iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L", id, "DRI_ALL_PLAYERS", g_iConnectedCount, g_iMaxPlayers);
+			
 			set_hudmessage(55, 245, 55, 0.02, 0.18, 0, _, UPDATE_INTERVAL, _, _, 3);
 			ShowSyncHudMsg(id, g_iHudInformer, szInformer);
 		}
@@ -151,12 +151,12 @@ public Task_ShowInfo()
 		if(g_iHealth[id] >= 255)
 		{
 			set_dhudmessage(55, 245, 55, 0.02, 0.90, 0, _, UPDATE_INTERVAL - 0.05);
-			show_dhudmessage(id, "%L", LANG_PLAYER, "DRI_HEALTH", g_iHealth[id]);
+			show_dhudmessage(id, "%L", id, "DRI_HEALTH", g_iHealth[id]);
 		}
 		
 		new bool:bShowInfo[33];
-		get_user_name(id, szName, charsmax(szName));
-		iLen = formatex(szSpecInfo, charsmax(szSpecInfo), "%L^n", LANG_PLAYER, "DRI_SPECLIST", szName, g_iHealth[id], g_iMoney[id], g_iPlayerFps[id]);
+		
+		iLen = 0;
 		
 		for(new dead = 1; dead <= g_iMaxPlayers; dead++)
 		{
@@ -165,7 +165,7 @@ public Task_ShowInfo()
 			if(pev(dead, pev_iuser2) == id)
 			{
 				get_user_name(dead, szName, charsmax(szName));				
-				iLen += formatex(szSpecInfo[iLen], charsmax(szSpecInfo) - iLen, "^n%s", szName);
+				iLen += formatex(szSpecList[iLen], charsmax(szSpecList) - iLen, "^n%s", szName);
 				
 				bShowInfo[dead] = true;
 				bShowInfo[id] = true;
@@ -176,12 +176,16 @@ public Task_ShowInfo()
 			#if defined DONT_SHOW_FOR_ALIVE
 			bShowInfo[id] = false;
 			#endif
+			
+			get_user_name(id, szName, charsmax(szName));
 			for(new player = 1; player < g_iMaxPlayers; player++)
 			{
 				if(g_bSpecList[player] && bShowInfo[player])
 				{
+					formatex(szSpecInfo, charsmax(szSpecInfo), "%L^n", player, "DRI_SPECLIST", szName, g_iHealth[id], g_iMoney[id], g_iPlayerFps[id]);
+					
 					set_hudmessage(245, 245, 245, 0.70, 0.15, 0, _, UPDATE_INTERVAL, _, _, 3);
-					ShowSyncHudMsg(player, g_iHudSpecList, szSpecInfo);
+					ShowSyncHudMsg(player, g_iHudSpecList, "%s%s", szSpecInfo, szSpecList);
 				}
 			}
 		}
@@ -202,7 +206,7 @@ public Task_ShowSpeed()
 		fSpeed = vector_length(fVelocity);
 		
 		set_hudmessage(0, 55, 255, -1.0, 0.7, 0, _, 0.1, _, _, 2);
-		ShowSyncHudMsg(id, g_iHudSpeed, "%L", LANG_PLAYER, "DRI_SPEEDOMETER", fSpeed);
+		ShowSyncHudMsg(id, g_iHudSpeed, "%L", id, "DRI_SPEEDOMETER", fSpeed);
 	}
 }
 //********
