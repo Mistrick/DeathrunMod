@@ -8,7 +8,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "0.2"
+#define VERSION "0.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -78,12 +78,12 @@ public Event_NewRound()
 //***** *****//
 public dr_selected_mode(id, mode)
 {
+	g_iCurMode = mode;
 	if(g_iModeSnow == mode)
 	{
 		give_item(id, "weapon_smokegrenade");
 		cs_set_user_bpammo(id, CSW_SMOKEGRENADE, SNOWBALL_AMOUNT);
 	}
-	g_iCurMode = mode;
 }
 //****************************//
 public Message_TextMsg(msgid, dest, reciver)
