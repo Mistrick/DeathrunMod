@@ -1,5 +1,4 @@
 #include <amxmodx>
-#include <cstrike>
 #include <fakemeta>
 #include <hamsandwich>
 #include <deathrun_modes>
@@ -10,7 +9,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.8"
+#define VERSION "0.8.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -18,7 +17,16 @@
 #define UPDATE_INTERVAL 1.0
 //#define DONT_SHOW_FOR_ALIVE
 
+#define fm_get_user_team(%0) get_pdata_int(%0, 114)
+
 new const PREFIX[] = "^4[DRI]";
+
+enum (+=100)
+{
+	TASK_FPSCOUNT = 100,
+	TASK_INFORMER,
+	TASK_SPEEDOMETER
+};
 
 new g_szCurMode[32], g_iConnectedCount, g_iMaxPlayers, g_iHudInformer, g_iHudSpecList, g_iHudSpeed;
 new bool:g_bConnected[33], bool:g_bAlive[33], bool:g_bInformer[33], bool:g_bSpeed[33], bool:g_bSpecList[33];
@@ -46,9 +54,9 @@ public plugin_init()
 	
 	g_iMaxPlayers = get_maxplayers();
 	
-	set_task(1.0, "Task_FramesCount", .flags = "b");
-	set_task(UPDATE_INTERVAL, "Task_ShowInfo", .flags = "b");
-	set_task(0.1, "Task_ShowSpeed", .flags = "b");
+	set_task(1.0, "Task_FramesCount", TASK_FPSCOUNT, .flags = "b");
+	set_task(UPDATE_INTERVAL, "Task_ShowInfo", TASK_INFORMER, .flags = "b");
+	set_task(0.1, "Task_ShowSpeed", TASK_SPEEDOMETER, .flags = "b");
 }
 public plugin_cfg()
 {
@@ -219,7 +227,7 @@ stock get_ct(&alive, &count)
 	count = 0; alive = 0;
 	for(new id = 1; id <= g_iMaxPlayers; id++)
 	{
-		if(g_bConnected[id] && cs_get_user_team(id) == CS_TEAM_CT)
+		if(g_bConnected[id] && fm_get_user_team(id) == 2)
 		{
 			count++;
 			if(g_bAlive[id]) alive++;
