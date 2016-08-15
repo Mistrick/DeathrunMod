@@ -3,6 +3,20 @@
 #endif
 #define _deathrun_modes_included
 
+enum _:ModeData
+{
+	m_Name[32],
+	m_RoundDelay,
+	m_CurDelay,
+	m_CT_BlockWeapon,
+	m_TT_BlockWeapon,
+	m_CT_BlockButtons,
+	m_TT_BlockButtons,
+	m_Bhop,
+	m_Usp,
+	m_Hide
+};
+
 /**
  * Регистрация режима.
  *
@@ -38,6 +52,21 @@ native dr_get_mode(name[] = "", size = 0);
  * @param id				Индекс игрока от которого будет вызван форвард выбора режима.
  */
 native dr_set_mode(mode, fwd = 0, id = 0);
+
+/**
+ * Получение индекса режима по имени.
+ * 
+ * @param name				Имя режима.
+ */
+native dr_get_mode_by_name(name[]);
+
+/**
+ * Получение индекса режима по имени.
+ * 
+ * @param mode				Индекс режима, полученный при регистрации.
+ * @param modeinfo				Массив для получение информации о режиме.
+ */
+native dr_get_mode_info(mode, modeinfo[ModeData]);
 
 /**
  * Установка автобхопа для текущего режима.
