@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.9.2"
+#define VERSION "0.9.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -144,7 +144,7 @@ public native_set_mode(plugin, params)
 	
 	new mode_index = get_param(arg_mode_index) - 1;
 	
-	if(0 < mode_index || mode_index >= g_iModesNum)
+	if(mode_index < 0 || mode_index >= g_iModesNum)
 	{
 		log_amx("[DRM] Set mode: wrong mode index! index %d", mode_index + 1);
 		return 0;
@@ -152,8 +152,12 @@ public native_set_mode(plugin, params)
 	
 	g_iCurMode = mode_index;
 	ArrayGetArray(g_aModes, mode_index, g_eCurModeInfo);
-	g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay];
-	ArraySetArray(g_aModes, mode_index, g_eCurModeInfo);
+	
+	if(g_eCurModeInfo[m_RoundDelay])
+	{
+		g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
+		ArraySetArray(g_aModes, mode_index, g_eCurModeInfo);
+	}
 	
 	if(get_param(arg_forward))
 	{
@@ -360,7 +364,7 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 }
 public Ham_TouchItems_Pre(ent, id)
 {
-	if(!IsPlayer(id) || g_iCurMode < 0) return HAM_IGNORED;
+	if(!IsPlayer(id) || g_iCurMode == NONE_MODE) return HAM_IGNORED;
 	
 	new CsTeams:iTeam = cs_get_user_team(id);
 	
@@ -473,8 +477,12 @@ public ModesMenu_Handler(id, key)
 			g_iCurMode = iMode;
 			
 			ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
-			g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
-			ArraySetArray(g_aModes, iMode, g_eCurModeInfo);
+			
+			if(g_eCurModeInfo[m_RoundDelay])
+			{
+				g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
+				ArraySetArray(g_aModes, iMode, g_eCurModeInfo);
+			}
 			
 			CheckUsp();
 			
@@ -517,8 +525,11 @@ public Task_MenuTimer(id)
 		
 		g_iCurMode = iMode;
 		
-		g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
-		ArraySetArray(g_aModes, iMode, g_eCurModeInfo);
+		if(g_eCurModeInfo[m_RoundDelay])
+		{
+			g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
+			ArraySetArray(g_aModes, iMode, g_eCurModeInfo);
+		}
 		
 		CheckUsp();
 		

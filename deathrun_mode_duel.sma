@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.10.1"
+#define VERSION "0.10.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -52,7 +52,6 @@ enum
 };
 
 new g_iModeDuel;
-new g_bDuelPreStart;
 new g_bDuelStarted;
 new g_iDuelType;
 new g_iDuelPlayers[2];
@@ -251,7 +250,7 @@ GetSpawnAngles()
 }
 public client_disconnect(id)
 {
-	if((g_bDuelStarted || g_bDuelPreStart) && (id == g_iDuelPlayers[DUELIST_CT] || id == g_iDuelPlayers[DUELIST_T]))
+	if((g_bDuelStarted) && (id == g_iDuelPlayers[DUELIST_CT] || id == g_iDuelPlayers[DUELIST_T]))
 	{
 		ResetDuel();
 		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
@@ -429,7 +428,7 @@ public DuelType_Handler(id, menu, item)
 }
 DuelPreStart()
 {
-	g_bDuelPreStart = true;
+	g_bDuelStarted = true;
 	
 	PrepareForDuel(DUELIST_CT);
 	PrepareForDuel(DUELIST_T);
@@ -451,7 +450,7 @@ DuelPreStart()
 }
 public Task_PreStartTimer()
 {
-	if(!g_bDuelPreStart) return;
+	if(!g_bDuelStarted) return;
 	
 	if(--g_iDuelTimer <= 0)
 	{
@@ -466,9 +465,6 @@ public Task_PreStartTimer()
 
 DuelStartForward(type)
 {
-	g_bDuelStarted = true;
-	g_bDuelPreStart = false;
-	
 	switch(type)
 	{
 		case DUELTYPE_KNIFE:
@@ -596,11 +592,6 @@ public Ham_SecondaryAttack_Pre(weapon)
 }
 public Ham_PlayerTakeDamage_Pre(victim, idinflictor, attacker, Float:damage, damagebits)
 {
-	if(g_bDuelPreStart)
-	{
-		return HAM_SUPERCEDE;
-	}
-	
 	if(!g_bDuelStarted || victim == attacker || (victim != g_iDuelPlayers[DUELIST_CT] && victim != g_iDuelPlayers[DUELIST_T]))
 	{
 		return HAM_IGNORED;
@@ -675,7 +666,7 @@ FinishDuel(winner, looser)
 }
 public dr_selected_mode(id, mode)
 {
-	if((g_bDuelPreStart || g_bDuelStarted) && mode != g_iModeDuel)
+	if(g_bDuelStarted && mode != g_iModeDuel)
 	{
 		ResetDuel();
 		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
@@ -683,7 +674,6 @@ public dr_selected_mode(id, mode)
 }
 ResetDuel()
 {
-	g_bDuelPreStart = false;
 	g_bDuelStarted = false;
 	g_iDuelPlayers[DUELIST_CT] = 0;
 	g_iDuelPlayers[DUELIST_T] = 0;
