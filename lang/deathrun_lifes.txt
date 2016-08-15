@@ -15,3 +15,9 @@ DRL_LIFE_MENU = \yMenu de vida\w[Vidas: \r%d\w]\y:
 DRL_RESPAWN = Renascer
 DRL_EXIT = Sair
 DRL_CANT_RESPAWN = Voce nao pode renascer.
+
+[tr]
+DRL_LIFE_MENU = \yYasam menusu\w[yasayan: \r%d\w]\y:
+DRL_RESPAWN = Yeniden Dogma
+DRL_EXIT = Cikis
+DRL_CANT_RESPAWN = Yeniden dogamazsin.

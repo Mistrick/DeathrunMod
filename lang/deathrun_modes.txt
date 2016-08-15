@@ -33,3 +33,15 @@ DRM_MENU_BACK = Anterior
 DRM_MENU_TIMELEFT = \dVoce tem \r%d \dsegundos.
 DRM_SELECTED_MODE = O ^3Terrorista^1 selecionou o modo:^4 %s^1.
 DRM_RANDOM_MODE = Modo ^3aleatorio^1:^4 %s^1.
+
+[tr]
+DRM_BHOP_MSG = Bhop ^3 %L^1.
+DRM_ENABLED = aktif edildi
+DRM_DISABLED = kapatildi
+DRM_USED_BUTTON = ^3TE Takimi^1 butonu kullandi. Mod: ^4Buton^1.
+DRM_MENU_SELECT_MODE = \yMod Secin:
+DRM_MENU_NEXT = Siradaki
+DRM_MENU_BACK = Bi geri
+DRM_MENU_TIMELEFT = \r%d \dsaniyen var.
+DRM_SELECTED_MODE = ^3TE takimi^4 %s^3 modunu secti^1.
+DRM_RANDOM_MODE = ^3Rastgele^1 mod:^4 %s^1.

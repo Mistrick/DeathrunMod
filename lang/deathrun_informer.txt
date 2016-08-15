@@ -39,3 +39,17 @@ DRI_ALL_PLAYERS = Todos os jogadores: %d/%d
 DRI_HEALTH = Vida: %d
 DRI_SPECLIST = Jogador: %s^nVida: %dHP, Dinheiro: $%d, FPS: %d
 DRI_SPEEDOMETER = Velocidade: %3.2f
+
+[tr]
+DRI_INFORMER_MSG = Muhbir ^3 %L^1.
+DRI_SPECLIST_MSG = Izleyiciler^3 %L^1.
+DRI_SPEEDOMETER_MSG = Hiz Gostergesi ^3 %L^1.
+DRI_ENABLED = aktif edildi
+DRI_DISABLED = kapatildi
+DRI_MODE = Mod
+DRI_TIMELEFT = Kalan Zaman: %02d:%02d
+DRI_ALIVECT = Yasayan CT: %d/%d
+DRI_ALL_PLAYERS = Butun Oyuncular: %d/%d
+DRI_HEALTH = Can: %d
+DRI_SPECLIST = Oyuncu: %s^nCan: %dHP, Para: $%d, FPS: %d
+DRI_SPEEDOMETER = Hiz: %3.2f

@@ -30,3 +30,14 @@ DRD_DUEL_OFFER = \yVoce quer comecar o duelo?
 DRD_YES = Sim
 DRD_NO = Nao
 DRD_DUEL_WINNER = O vencedor do duela eh^3 %s^1.
+
+[tr]
+DRD_SET_SPAWNS = Ikı dogma noktasi belirlemeniz gerekmektedir.
+DRD_SPAWNS_SAVED = Dogma noktalari kaydedildi.
+DRD_DUEL_START_TIME = Karsilasma %d saniye icinde baslayacak.
+DRD_TIME_OVER = Karsilasma zamani bitti.
+DRD_SHOOT_TIME = %d saniyeniz var.
+DRD_DUEL_OFFER = \yKarsilasmayi baslatmak istiyor musunuz?
+DRD_YES = Evet
+DRD_NO = Hayir
+DRD_DUEL_WINNER = Karsilasmanin kazanani^3 %s^1.
