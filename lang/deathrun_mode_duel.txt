@@ -19,3 +19,14 @@ DRD_DUEL_OFFER = \yХотите начать дуэль?
 DRD_YES = Да
 DRD_NO = Нет
 DRD_DUEL_WINNER = Победитель дуэли^3 %s^1.
+
+[bp]
+DRD_SET_SPAWNS = Voce deve colocar dois spawns.
+DRD_SPAWNS_SAVED = Spawns salvos.
+DRD_DUEL_START_TIME = O duelo ira comecar em %d segundos.
+DRD_TIME_OVER = O tempo de duelo acabou.
+DRD_SHOOT_TIME = YVoce tem %d segundos.
+DRD_DUEL_OFFER = \yVoce quer comecar o duelo?
+DRD_YES = Sim
+DRD_NO = Nao
+DRD_DUEL_WINNER = O vencedor do duela eh^3 %s^1.

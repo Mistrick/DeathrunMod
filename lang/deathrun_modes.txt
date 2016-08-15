@@ -21,3 +21,15 @@ DRM_MENU_BACK = Назад
 DRM_MENU_TIMELEFT = \dУ вас осталось \r%d \dсек.
 DRM_SELECTED_MODE = ^3Террорист^1 выбрал режим:^4 %s^1.
 DRM_RANDOM_MODE = ^3Случайный^1 режим:^4 %s^1.
+
+[bp]
+DRM_BHOP_MSG = O Bhop eh^3 %L^1.
+DRM_ENABLED = ativado
+DRM_DISABLED = desativado
+DRM_USED_BUTTON = O ^3Terrorista^1 usou o botao. Modo: ^4Butoes^1.
+DRM_MENU_SELECT_MODE = \ySelecione o modo:
+DRM_MENU_NEXT = Proximo
+DRM_MENU_BACK = Anterior
+DRM_MENU_TIMELEFT = \dVoce tem \r%d \dsegundos.
+DRM_SELECTED_MODE = O ^3Terrorista^1 selecionou o modo:^4 %s^1.
+DRM_RANDOM_MODE = Modo ^3aleatorio^1:^4 %s^1.

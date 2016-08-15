@@ -7,3 +7,8 @@ DRBC_CANT_USE = You can't use this button!
 DRC_TERRORIST_LEFT = ^3%s^1 отключился от сервера.^3 %s^1 стал террористом.
 DRC_BECAME_TERRORIST = ^3%s^1 стал террористом.
 DRBC_CANT_USE = Вы не можете использовать эту кнопку!
+
+[bp]
+DRC_TERRORIST_LEFT = ^3%s^1 saiu do servidor.^3 %s^1 tournou-se um terrorista.
+DRC_BECAME_TERRORIST = ^3%s^1 tournou-se um terrorista.
+DRBC_CANT_USE = Você no pode usar esse botao!

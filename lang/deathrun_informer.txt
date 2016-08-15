@@ -25,3 +25,17 @@ DRI_ALL_PLAYERS = Всего игроков: %d/%d
 DRI_HEALTH = Health: %d
 DRI_SPECLIST = Игрок: %s^nHealth: %dHP, Деньги: $%d, FPS: %d
 DRI_SPEEDOMETER = Скорость: %3.2f
+
+[bp]
+DRI_INFORMER_MSG = O informante eh^3 %L^1.
+DRI_SPECLIST_MSG = O especialista eh^3 %L^1.
+DRI_SPEEDOMETER_MSG = O medidor de velocidade eh^3 %L^1.
+DRI_ENABLED = ativado
+DRI_DISABLED = desativado
+DRI_MODE = Modo
+DRI_TIMELEFT = Tempos restante: %02d:%02d
+DRI_ALIVECT = CT vivos: %d/%d
+DRI_ALL_PLAYERS = Todos os jogadores: %d/%d
+DRI_HEALTH = Vida: %d
+DRI_SPECLIST = Jogador: %s^nVida: %dHP, Dinheiro: $%d, FPS: %d
+DRI_SPEEDOMETER = Velocidade: %3.2f

@@ -9,3 +9,9 @@ DRL_LIFE_MENU = \yМеню жизней\w[Жизни: \r%d\w]\y:
 DRL_RESPAWN = Воскреситься
 DRL_EXIT = Выйти
 DRL_CANT_RESPAWN = Вы не можете воскреситься.
+
+[bp]
+DRL_LIFE_MENU = \yMenu de vida\w[Vidas: \r%d\w]\y:
+DRL_RESPAWN = Renascer
+DRL_EXIT = Sair
+DRL_CANT_RESPAWN = Voce nao pode renascer.
