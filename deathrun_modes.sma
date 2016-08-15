@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.9"
+#define VERSION "0.9.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -24,20 +24,6 @@
 enum (+=100)
 {
 	TASK_SHOWMENU = 100
-};
-
-enum _:ModeData
-{
-	m_Name[32],
-	m_RoundDelay,
-	m_CurDelay,
-	m_CT_BlockWeapon,
-	m_TT_BlockWeapon,
-	m_CT_BlockButtons,
-	m_TT_BlockButtons,
-	m_Bhop,
-	m_Usp,
-	m_Hide
 };
 
 #define NONE_MODE -1
