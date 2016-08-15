@@ -9,7 +9,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.8.1"
+#define VERSION "0.8.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -81,17 +81,17 @@ public client_disconnect(id)
 public Command_Informer(id)
 {
 	g_bInformer[id] = !g_bInformer[id];
-	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRI_INFORMER_MSG", LANG_PLAYER, g_bInformer[id] ? "DRI_ENABLED" : "DRI_DISABLED");
+	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRI_INFORMER_MSG", id, g_bInformer[id] ? "DRI_ENABLED" : "DRI_DISABLED");
 }
 public Command_SpecList(id)
 {
 	g_bSpecList[id] = !g_bSpecList[id];
-	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRI_SPECLIST_MSG", LANG_PLAYER, g_bSpecList[id] ? "DRI_ENABLED" : "DRI_DISABLED");
+	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRI_SPECLIST_MSG", id, g_bSpecList[id] ? "DRI_ENABLED" : "DRI_DISABLED");
 }
 public Command_Speed(id)
 {
 	g_bSpeed[id] = !g_bSpeed[id];
-	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRI_SPEEDOMETER_MSG", LANG_PLAYER, g_bSpeed[id] ? "DRI_ENABLED" : "DRI_DISABLED");
+	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRI_SPEEDOMETER_MSG", id, g_bSpeed[id] ? "DRI_ENABLED" : "DRI_DISABLED");
 }
 //***** Events *****//
 public Event_RoundStart()

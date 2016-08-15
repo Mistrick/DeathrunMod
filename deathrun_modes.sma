@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.9.1"
+#define VERSION "0.9.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -274,7 +274,7 @@ public Command_Bhop(id)
 	if(!g_eCurModeInfo[m_Bhop]) return PLUGIN_CONTINUE;
 	
 	g_bBhop[id] = !g_bBhop[id];
-	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRM_BHOP_MSG", LANG_PLAYER, g_bBhop[id] ? "DRM_ENABLED" : "DRM_DISABLED");
+	client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRM_BHOP_MSG", id, g_bBhop[id] ? "DRM_ENABLED" : "DRM_DISABLED");
 	
 	return PLUGIN_CONTINUE;
 }
@@ -407,7 +407,7 @@ public Show_ModesMenu(id, iPage)
 	
 	new szMenu[512], iLen, Item, iKey, eModeInfo[ModeData];
 	
-	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", LANG_PLAYER, "DRM_MENU_SELECT_MODE");
+	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", id, "DRM_MENU_SELECT_MODE");
 	
 	for (i = iStart; i < iEnd; i++)
 	{
@@ -437,21 +437,21 @@ public Show_ModesMenu(id, iPage)
 		if (iEnd < iMax)
 		{
 			iKey |= (1 << 8);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n\r9.\w %L^n", LANG_PLAYER, "DRM_MENU_NEXT");
+			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n\r9.\w %L^n", id, "DRM_MENU_NEXT");
 			if(iPage)
 			{
 				iKey |= (1 << 9);
-				iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r0.\w %L^n", LANG_PLAYER, "DRM_MENU_BACK");
+				iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r0.\w %L^n", id, "DRM_MENU_BACK");
 			}
 		}
 		else if(iPage)
 		{
 			iKey |= (1 << 9);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n^n\r0.\w %L^n", LANG_PLAYER, "DRM_MENU_BACK");
+			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n^n\r0.\w %L^n", id, "DRM_MENU_BACK");
 		}
 	}
 	
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n%L", LANG_PLAYER, "DRM_MENU_TIMELEFT", g_iTimer[id]);
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n%L", id, "DRM_MENU_TIMELEFT", g_iTimer[id]);
 	
 	show_menu(id, iKey, szMenu, -1, "ModesMenu");
 	

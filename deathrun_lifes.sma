@@ -7,7 +7,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Lifes"
-#define VERSION "0.3"
+#define VERSION "0.3.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -67,9 +67,9 @@ public Show_LifeMenu(id)
 {
 	new szMenu[256], iLen;
 	
-	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", LANG_PLAYER, "DRL_LIFE_MENU", g_iLifes[id]);
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r1.\w %L^n", LANG_PLAYER, "DRL_RESPAWN");
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r2.\w %L", LANG_PLAYER, "DRL_EXIT");
+	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", id, "DRL_LIFE_MENU", g_iLifes[id]);
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r1.\w %L^n", id, "DRL_RESPAWN");
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r2.\w %L", id, "DRL_EXIT");
 	
 	show_menu(id, (1 << 0)|(1 << 1), szMenu, -1, "LifeMenu");
 }
@@ -86,7 +86,7 @@ public LifeMenu_Handler(id, key)
 			}
 			else
 			{
-				client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRL_CANT_RESPAWN");
+				client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRL_CANT_RESPAWN");
 			}
 		}
 	}

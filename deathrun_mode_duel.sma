@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.10"
+#define VERSION "0.10.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -368,7 +368,7 @@ SaveSpawns(id)
 {
 	if(!g_bSetSpawn[DUELIST_CT] || !g_bSetSpawn[DUELIST_T])
 	{
-		client_print_color(id, print_team_default, "^%s^1 %L", PREFIX, LANG_PLAYER, "DRD_SET_SPAWNS");
+		client_print_color(id, print_team_default, "^%s^1 %L", PREFIX, id, "DRD_SET_SPAWNS");
 		return;
 	}
 	if(file_exists(g_szSpawnsFile))
@@ -383,7 +383,7 @@ SaveSpawns(id)
 		fclose(file);
 		g_bLoadedSpawns = true;
 		GetSpawnAngles();
-		client_print_color(id, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRD_SPAWNS_SAVED");
+		client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRD_SPAWNS_SAVED");
 	}
 }
 public Command_Duel(id)
@@ -542,7 +542,7 @@ public Task_ChangeTurn()
 	
 	if(g_iDuelTurnTimer > 0)
 	{
-		client_print(g_iDuelPlayers[g_iCurTurn], print_center, "%L", LANG_PLAYER, "DRD_SHOOT_TIME", g_iDuelTurnTimer);
+		client_print(g_iDuelPlayers[g_iCurTurn], print_center, "%L", g_iDuelPlayers[g_iCurTurn], "DRD_SHOOT_TIME", g_iDuelTurnTimer);
 	}
 	else
 	{
@@ -651,9 +651,9 @@ Show_DuelOffer(id)
 {
 	new szMenu[256], iLen;
 	
-	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", LANG_PLAYER, "DRD_DUEL_OFFER");
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r1.\w %L^n", LANG_PLAYER, "DRD_YES");
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r2.\w %L", LANG_PLAYER, "DRD_NO");
+	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", id, "DRD_DUEL_OFFER");
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r1.\w %L^n", id, "DRD_YES");
+	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r2.\w %L", id, "DRD_NO");
 	
 	show_menu(id, (1 << 0)|(1 << 1), szMenu, -1, "DuelOfferMenu");
 }
