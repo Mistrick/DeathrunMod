@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.8"
+#define VERSION "0.9"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -105,67 +105,175 @@ public plugin_cfg()
 public plugin_natives()
 {
 	register_library("deathrun_modes");
-	register_native("dr_register_mode", "native_register_mode", 1);
-	register_native("dr_set_mode", "native_set_mode", 1);
-	register_native("dr_get_mode", "native_get_mode", 1);
-	register_native("dr_set_mode_bhop", "native_set_mode_bhop", 1);
-	register_native("dr_get_mode_bhop", "native_get_mode_bhop", 1);
-	register_native("dr_set_user_bhop", "native_set_user_bhop", 1);
-	register_native("dr_get_user_bhop", "native_get_user_bhop", 1);
+	register_native("dr_register_mode", "native_register_mode");
+	register_native("dr_set_mode", "native_set_mode");
+	register_native("dr_get_mode", "native_get_mode");
+	register_native("dr_get_mode_by_name", "native_get_mode_by_name");
+	register_native("dr_get_mode_info", "native_get_mode_info");
+	register_native("dr_set_mode_bhop", "native_set_mode_bhop");
+	register_native("dr_get_mode_bhop", "native_get_mode_bhop");
+	register_native("dr_set_user_bhop", "native_set_user_bhop");
+	register_native("dr_get_user_bhop", "native_get_user_bhop");
 }
-public native_register_mode(Name[32], RoundDelay, CT_BlockWeapons, TT_BlockWeapons, CT_BlockButtons, TT_BlockButtons, Bhop, Usp, Hide)
+public native_register_mode(plugin, params)
 {
-	param_convert(1);
+	enum
+	{
+		arg_name = 1,
+		arg_round_delay,
+		arg_ct_block_weapons,
+		arg_tt_block_weapons,
+		arg_ct_block_buttons,
+		arg_tt_block_buttons,
+		arg_bhop,
+		arg_usp,
+		arg_hide
+	};
+	
 	new eModeInfo[ModeData];
 	
-	copy(eModeInfo[m_Name], charsmax(eModeInfo[m_Name]), Name);
-	eModeInfo[m_RoundDelay] = RoundDelay;
-	eModeInfo[m_CT_BlockWeapon] = CT_BlockWeapons;
-	eModeInfo[m_TT_BlockWeapon] = TT_BlockWeapons;
-	eModeInfo[m_CT_BlockButtons] = CT_BlockButtons;
-	eModeInfo[m_TT_BlockButtons] = TT_BlockButtons;
-	eModeInfo[m_Bhop] = Bhop;
-	eModeInfo[m_Usp] = Usp;
-	eModeInfo[m_Hide] = Hide;
+	get_string(arg_name, eModeInfo[m_Name], charsmax(eModeInfo[m_Name]));
+	eModeInfo[m_RoundDelay] = get_param(arg_round_delay);
+	eModeInfo[m_CT_BlockWeapon] = get_param(arg_ct_block_weapons);
+	eModeInfo[m_TT_BlockWeapon] = get_param(arg_tt_block_weapons);
+	eModeInfo[m_CT_BlockButtons] = get_param(arg_ct_block_buttons);
+	eModeInfo[m_TT_BlockButtons] = get_param(arg_tt_block_buttons);
+	eModeInfo[m_Bhop] = get_param(arg_bhop);
+	eModeInfo[m_Usp] = get_param(arg_usp);
+	eModeInfo[m_Hide] = get_param(arg_hide);
 	
 	ArrayPushArray(g_aModes, eModeInfo);
 	g_iModesNum++;
 	
 	return g_iModesNum;
 }
-public native_set_mode(mode, fwd, id)
+public native_set_mode(plugin, params)
 {
-	if(mode && mode <= g_iModesNum)
+	enum
 	{
-		g_iCurMode = mode - 1;
-		ArrayGetArray(g_aModes, mode - 1, g_eCurModeInfo);
-		g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay];
-		ArraySetArray(g_aModes, mode - 1, g_eCurModeInfo);
-		
-		if(fwd) ExecuteForward(g_fwSelectedMode, g_fwReturn, id, mode);
+		arg_mode_index = 1,
+		arg_forward,
+		arg_player_id
+	};
+	
+	new mode_index = get_param(arg_mode_index) - 1;
+	
+	if(0 < mode_index || mode_index >= g_iModesNum)
+	{
+		log_amx("[DRM] Set mode: wrong mode index! index %d", mode_index + 1);
+		return 0;
 	}
+	
+	g_iCurMode = mode_index;
+	ArrayGetArray(g_aModes, mode_index, g_eCurModeInfo);
+	g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay];
+	ArraySetArray(g_aModes, mode_index, g_eCurModeInfo);
+	
+	if(get_param(arg_forward))
+	{
+		ExecuteForward(g_fwSelectedMode, g_fwReturn, get_param(arg_player_id), mode_index + 1);
+	}
+	
+	return 1;
 }
-public native_get_mode(name[], size)
+public native_get_mode(plugin, params)
 {
-	param_convert(1);
-	if(size) copy(name, size, g_eCurModeInfo[m_Name]);
+	enum
+	{
+		arg_name = 1,
+		arg_size
+	};
+	
+	new size = get_param(arg_size);
+	
+	if(size > 0)
+	{
+		set_string(arg_name, g_eCurModeInfo[m_Name], size);
+	}
+	
 	return g_iCurMode + 1;
 }
-public native_set_mode_bhop(bhop)
+public native_get_mode_by_name(plugin, params)
 {
-	g_eCurModeInfo[m_Bhop] = bhop;
+	enum { arg_name = 1 };
+	
+	new name[32]; get_string(arg_name, name, charsmax(name));
+	
+	for(new mode_index, eModeInfo[ModeData]; mode_index < g_iModesNum; mode_index++)
+	{
+		ArrayGetArray(g_aModes, mode_index, eModeInfo);
+		if(equali(name, eModeInfo[m_Name]))
+		{
+			return mode_index + 1;
+		}
+	}
+	
+	return 0;
 }
-public native_get_mode_bhop()
+public native_get_mode_info(plugin, params)
+{
+	enum
+	{
+		arg_mode_index = 1,
+		arg_info
+	};
+	
+	new mode_index = get_param(arg_mode_index) - 1;
+	
+	if(0 < mode_index || mode_index >= g_iModesNum)
+	{
+		log_amx("[DRM] Get mode info: wrong mode index! index %d", mode_index + 1);
+		return 0;
+	}
+	
+	new eModeInfo[ModeData]; ArrayGetArray(g_aModes, mode_index, eModeInfo);
+	set_array(arg_info, eModeInfo, ModeData);
+	
+	return 1;
+}
+public native_set_mode_bhop(plugin, params)
+{
+	enum { arg_mode_bhop = 1 };
+	
+	g_eCurModeInfo[m_Bhop] = get_param(arg_mode_bhop) ? 1 : 0;
+}
+public native_get_mode_bhop(plugin, params)
 {
 	return g_eCurModeInfo[m_Bhop];
 }
-public native_set_user_bhop(id, bool:bhop)
+public native_set_user_bhop(plugin, params)
 {
-	g_bBhop[id] = bhop;
+	enum
+	{
+		arg_player_id = 1,
+		arg_bhop
+	};
+	
+	new player = get_param(arg_player_id);
+	
+	if(player < 1 || player > g_iMaxPlayers)
+	{
+		log_amx("[DRM] Set user bhop: wrong player index! index %d", player);
+		return 0;
+	}
+	
+	g_bBhop[player] = get_param(arg_bhop) ? true : false;
+	
+	return 1;
 }
 public bool:native_get_user_bhop(id)
 {
-	return g_bBhop[id];
+	enum { arg_player_id = 1 };
+	
+	new player = get_param(arg_player_id);
+	
+	if(player < 1 || player > g_iMaxPlayers)
+	{
+		log_amx("[DRM] Get user bhop: wrong player index! index %d", player);
+		return false;
+	}
+	
+	return g_bBhop[player];
 }
 public client_putinserver(id)
 {
