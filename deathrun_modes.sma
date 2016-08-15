@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.9.3"
+#define VERSION "0.9.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -210,7 +210,7 @@ public native_get_mode_info(plugin, params)
 	
 	new mode_index = get_param(arg_mode_index) - 1;
 	
-	if(0 < mode_index || mode_index >= g_iModesNum)
+	if(mode_index < 0 || mode_index >= g_iModesNum)
 	{
 		log_amx("[DRM] Get mode info: wrong mode index! index %d", mode_index + 1);
 		return 0;
