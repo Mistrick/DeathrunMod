@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.10.2"
+#define VERSION "0.10.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -208,9 +208,13 @@ LoadSpawns()
 	
 	if(g_bLoadedSpawns)
 	{
-		new Float:fDistance = get_distance_f(g_fDuelSpawnOrigins[DUELIST_CT], g_fDuelSpawnOrigins[DUELIST_T]);
-		g_iMinDistance = fDistance < MIN_DISTANCE ? floatround(fDistance - 32.0) : MIN_DISTANCE;
+		GetMinDistance();
 	}
+}
+GetMinDistance()
+{
+	new Float:fDistance = get_distance_f(g_fDuelSpawnOrigins[DUELIST_CT], g_fDuelSpawnOrigins[DUELIST_T]);
+	g_iMinDistance = fDistance < MIN_DISTANCE ? floatround(fDistance - 32.0) : MIN_DISTANCE;
 }
 FindSpawns()
 {
@@ -382,6 +386,7 @@ SaveSpawns(id)
 		fclose(file);
 		g_bLoadedSpawns = true;
 		GetSpawnAngles();
+		GetMinDistance();
 		client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRD_SPAWNS_SAVED");
 	}
 }
