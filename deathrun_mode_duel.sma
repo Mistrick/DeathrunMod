@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.10.3"
+#define VERSION "0.10.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -214,7 +214,7 @@ LoadSpawns()
 GetMinDistance()
 {
 	new Float:fDistance = get_distance_f(g_fDuelSpawnOrigins[DUELIST_CT], g_fDuelSpawnOrigins[DUELIST_T]);
-	g_iMinDistance = fDistance < MIN_DISTANCE ? floatround(fDistance - 32.0) : MIN_DISTANCE;
+	g_iMinDistance = fDistance < MIN_DISTANCE ? floatround(fDistance - 64.0) : MIN_DISTANCE;
 }
 FindSpawns()
 {
