@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.9.4"
+#define VERSION "0.9.5"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -263,7 +263,7 @@ public bool:native_get_user_bhop(id)
 		return false;
 	}
 	
-	return g_bBhop[player];
+	return g_eCurModeInfo[m_Bhop] && g_bBhop[player];
 }
 public client_putinserver(id)
 {
