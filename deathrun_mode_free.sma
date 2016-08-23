@@ -4,7 +4,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Free"
-#define VERSION "0.1"
+#define VERSION "0.1.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -31,7 +31,8 @@ public plugin_init()
 	
 	g_iModeFree = dr_register_mode
 	(
-		.Name = "Free",
+		.Name = "DRM_MODE_FREE",
+		.Mark = "free",
 		.RoundDelay = 0,
 		.CT_BlockWeapons = 1,
 		.TT_BlockWeapons = 1,

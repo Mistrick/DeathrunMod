@@ -7,7 +7,7 @@
 #pragma semicolon 1
 
 #define PLUGIN "Deathrun Mode: Invis"
-#define VERSION "0.2"
+#define VERSION "0.2.1"
 #define AUTHOR "Mistrick"
 
 #define TERRORIST_HEALTH 150
@@ -22,7 +22,8 @@ public plugin_init()
 	
 	g_iModeInvis = dr_register_mode
 	(
-		.Name = "Invis",
+		.Name = "DRM_MODE_INVIS",
+		.Mark = "invis",
 		.RoundDelay = 2,
 		.CT_BlockWeapons = 0,
 		.TT_BlockWeapons = 1,

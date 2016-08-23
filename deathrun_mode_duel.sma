@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.10.4"
+#define VERSION "0.10.5"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -131,7 +131,8 @@ public plugin_init()
 	
 	g_iModeDuel = dr_register_mode
 	(
-		.Name = "Duel",
+		.Name = "DRM_MODE_DUEL",
+		.Mark = "duel",
 		.RoundDelay = 0,
 		.CT_BlockWeapons = 1,
 		.TT_BlockWeapons = 1,

@@ -9,7 +9,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.8.2"
+#define VERSION "0.8.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -145,7 +145,7 @@ public Task_ShowInfo()
 		
 		if(g_bInformer[id])
 		{
-			iLen = formatex(szInformer, charsmax(szInformer), "%L: %s^n", id, "DRI_MODE", g_szCurMode);
+			iLen = formatex(szInformer, charsmax(szInformer), "%L: %L^n", id, "DRI_MODE", id, g_szCurMode);
 			iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", id, "DRI_TIMELEFT", iTimeLeft / 60, iTimeLeft % 60);
 			iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", id, "DRI_ALIVECT", iAlive, iCount);
 			iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L", id, "DRI_ALL_PLAYERS", g_iConnectedCount, g_iMaxPlayers);

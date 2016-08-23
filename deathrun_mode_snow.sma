@@ -8,7 +8,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "0.4"
+#define VERSION "0.4.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -52,8 +52,9 @@ public plugin_init()
 	
 	g_iModeSnow = dr_register_mode
 	(
-		.Name = "Snow",
-		.RoundDelay = 0,
+		.Name = "DRM_MODE_SNOW",
+		.Mark = "snow",
+		.RoundDelay = 3,
 		.CT_BlockWeapons = 1,
 		.TT_BlockWeapons = 1,
 		.CT_BlockButtons = 0,

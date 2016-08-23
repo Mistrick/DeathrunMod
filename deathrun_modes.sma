@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.9.5"
+#define VERSION "0.10"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -69,7 +69,8 @@ public plugin_init()
 	
 	g_iModeButtons = dr_register_mode
 	(
-		.Name = "Buttons",
+		.Name = "DRM_MODE_BUTTONS",
+		.Mark = "buttons",
 		.RoundDelay = 0,
 		.CT_BlockWeapons = 0,
 		.TT_BlockWeapons = 0,
@@ -80,7 +81,7 @@ public plugin_init()
 		.Hide = 0
 	);
 	
-	g_eCurModeInfo[m_Name] = "None";
+	g_eCurModeInfo[m_Name] = "DRM_MODE_NONE";
 	g_eCurModeInfo[m_Bhop] = DEFAULT_BHOP;
 	g_eCurModeInfo[m_Usp] = DEFAULT_USP;
 }
@@ -94,7 +95,7 @@ public plugin_natives()
 	register_native("dr_register_mode", "native_register_mode");
 	register_native("dr_set_mode", "native_set_mode");
 	register_native("dr_get_mode", "native_get_mode");
-	register_native("dr_get_mode_by_name", "native_get_mode_by_name");
+	register_native("dr_get_mode_by_mark", "native_get_mode_by_mark");
 	register_native("dr_get_mode_info", "native_get_mode_info");
 	register_native("dr_set_mode_bhop", "native_set_mode_bhop");
 	register_native("dr_get_mode_bhop", "native_get_mode_bhop");
@@ -106,6 +107,7 @@ public native_register_mode(plugin, params)
 	enum
 	{
 		arg_name = 1,
+		arg_mark,
 		arg_round_delay,
 		arg_ct_block_weapons,
 		arg_tt_block_weapons,
@@ -119,6 +121,7 @@ public native_register_mode(plugin, params)
 	new eModeInfo[ModeData];
 	
 	get_string(arg_name, eModeInfo[m_Name], charsmax(eModeInfo[m_Name]));
+	get_string(arg_mark, eModeInfo[m_Mark], charsmax(eModeInfo[m_Mark]));
 	eModeInfo[m_RoundDelay] = get_param(arg_round_delay);
 	eModeInfo[m_CT_BlockWeapon] = get_param(arg_ct_block_weapons);
 	eModeInfo[m_TT_BlockWeapon] = get_param(arg_tt_block_weapons);
@@ -183,16 +186,16 @@ public native_get_mode(plugin, params)
 	
 	return g_iCurMode + 1;
 }
-public native_get_mode_by_name(plugin, params)
+public native_get_mode_by_mark(plugin, params)
 {
-	enum { arg_name = 1 };
+	enum { arg_mark = 1 };
 	
-	new name[32]; get_string(arg_name, name, charsmax(name));
+	new mark[16]; get_string(arg_mark, mark, charsmax(mark));
 	
 	for(new mode_index, eModeInfo[ModeData]; mode_index < g_iModesNum; mode_index++)
 	{
 		ArrayGetArray(g_aModes, mode_index, eModeInfo);
-		if(equali(name, eModeInfo[m_Name]))
+		if(equali(mark, eModeInfo[m_Mark]))
 		{
 			return mode_index + 1;
 		}
@@ -286,7 +289,7 @@ public Command_Bhop(id)
 public Event_NewRound()
 {
 	g_iCurMode = NONE_MODE;
-	g_eCurModeInfo[m_Name] = "None";
+	g_eCurModeInfo[m_Name] = "DRM_MODE_NONE";
 	g_eCurModeInfo[m_Bhop] = DEFAULT_BHOP;
 	g_eCurModeInfo[m_Usp] = DEFAULT_USP;
 	g_eCurModeInfo[m_CT_BlockWeapon] = 0;
@@ -421,12 +424,12 @@ public Show_ModesMenu(id, iPage)
 		
 		if(eModeInfo[m_CurDelay] > 0)
 		{
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\d%d. %s[\r%d\d]^n", ++Item, eModeInfo[m_Name], eModeInfo[m_CurDelay]);
+			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\d%d. %L[\r%d\d]^n", ++Item, id, eModeInfo[m_Name], eModeInfo[m_CurDelay]);
 		}
 		else
 		{
 			iKey |= (1 << Item);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r%d.\w %s^n", ++Item, eModeInfo[m_Name]);
+			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r%d.\w %L^n", ++Item, id, eModeInfo[m_Name]);
 		}
 	}
 	
@@ -488,7 +491,7 @@ public ModesMenu_Handler(id, key)
 			
 			remove_task(id + TASK_SHOWMENU);
 			ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);			
-			client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", g_eCurModeInfo[m_Name]);
+			client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
 		}
 	}
 	
@@ -535,7 +538,7 @@ public Task_MenuTimer(id)
 		
 		ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);
 		
-		client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", g_eCurModeInfo[m_Name]);
+		client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
 	}
 	else
 	{
