@@ -6,6 +6,7 @@
 enum _:ModeData
 {
 	m_Name[32],
+	m_Mark[16],
 	m_RoundDelay,
 	m_CurDelay,
 	m_CT_BlockWeapon,
@@ -21,6 +22,7 @@ enum _:ModeData
  * Регистрация режима.
  *
  * @param Name				Имя режима, будет отображено в меню.
+ * @param Mark				Метка режима.
  * @param RoundDelay		На сколько раундов будет заблокирован режим для выбора.
  * @param CT_BlockWeapons	Позволяет блокировать взятие лежащего оружия для CT.
  * @param TT_BlockWeapons	Позволяет блокировать взятие лежащего оружия для T.
@@ -32,7 +34,7 @@ enum _:ModeData
  *
  * @return					Возвращает индекс режима.
  */
-native dr_register_mode(Name[32], RoundDelay, CT_BlockWeapons, TT_BlockWeapons, CT_BlockButtons, TT_BlockButtons, Bhop, Usp, Hide = 0);
+native dr_register_mode(Name[32], Mark[16], RoundDelay, CT_BlockWeapons, TT_BlockWeapons, CT_BlockButtons, TT_BlockButtons, Bhop, Usp, Hide = 0);
 
 /**
  * Получение имени и индекса текущего режима.
@@ -56,9 +58,11 @@ native dr_set_mode(mode, fwd = 0, id = 0);
 /**
  * Получение индекса режима по имени.
  * 
- * @param name				Имя режима.
+ * @param mark				Метка режима.
+ *
+ * @return					Возвращает индекс режима.
  */
-native dr_get_mode_by_name(name[]);
+native dr_get_mode_by_mark(mark[]);
 
 /**
  * Получение индекса режима по имени.
