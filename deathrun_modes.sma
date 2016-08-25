@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "0.10"
+#define VERSION "0.10.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -149,7 +149,7 @@ public native_set_mode(plugin, params)
 	
 	if(mode_index < 0 || mode_index >= g_iModesNum)
 	{
-		log_amx("[DRM] Set mode: wrong mode index! index %d", mode_index + 1);
+		log_error(AMX_ERR_NATIVE, "[DRM] Set mode: wrong mode index! index %d", mode_index + 1);
 		return 0;
 	}
 	
@@ -215,7 +215,7 @@ public native_get_mode_info(plugin, params)
 	
 	if(mode_index < 0 || mode_index >= g_iModesNum)
 	{
-		log_amx("[DRM] Get mode info: wrong mode index! index %d", mode_index + 1);
+		log_error(AMX_ERR_NATIVE, "[DRM] Get mode info: wrong mode index! index %d", mode_index + 1);
 		return 0;
 	}
 	
@@ -246,7 +246,7 @@ public native_set_user_bhop(plugin, params)
 	
 	if(player < 1 || player > g_iMaxPlayers)
 	{
-		log_amx("[DRM] Set user bhop: wrong player index! index %d", player);
+		log_error(AMX_ERR_NATIVE, "[DRM] Set user bhop: wrong player index! index %d", player);
 		return 0;
 	}
 	
@@ -262,7 +262,7 @@ public bool:native_get_user_bhop(id)
 	
 	if(player < 1 || player > g_iMaxPlayers)
 	{
-		log_amx("[DRM] Get user bhop: wrong player index! index %d", player);
+		log_error(AMX_ERR_NATIVE, "[DRM] Get user bhop: wrong player index! index %d", player);
 		return false;
 	}
 	
