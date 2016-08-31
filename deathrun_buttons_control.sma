@@ -5,7 +5,7 @@
 #include <hamsandwich>
 
 #define PLUGIN "Deathrun: Buttons Control"
-#define VERSION "0.1f"
+#define VERSION "1.0"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1

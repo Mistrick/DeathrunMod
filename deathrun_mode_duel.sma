@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "0.10.5"
+#define VERSION "1.0"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1

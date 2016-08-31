@@ -7,7 +7,7 @@
 #pragma semicolon 1
 
 #define PLUGIN "Deathrun Mode: Invis"
-#define VERSION "0.2.1"
+#define VERSION "1.0"
 #define AUTHOR "Mistrick"
 
 #define TERRORIST_HEALTH 150

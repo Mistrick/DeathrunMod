@@ -7,7 +7,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Lifes"
-#define VERSION "0.3.1"
+#define VERSION "1.0"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1

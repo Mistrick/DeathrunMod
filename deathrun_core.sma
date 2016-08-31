@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "0.8"
+#define VERSION "1.0"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -131,6 +131,7 @@ public plugin_natives()
 {
 	register_native("dr_get_terrorist", "native_get_terrorist", 1);
 	register_native("dr_set_next_terrorist", "native_set_next_terrorist", 1);
+	register_native("dr_get_next_terrorist", "native_get_next_terrorist", 1);
 }
 public native_get_terrorist()
 {
@@ -139,6 +140,10 @@ public native_get_terrorist()
 public native_set_next_terrorist(id)
 {
 	g_iNextTerrorist = id;
+}
+public native_get_next_terrorist()
+{
+	return g_iNextTerrorist;
 }
 public client_putinserver(id)
 {
@@ -369,8 +374,7 @@ stock _get_players(players[32], bool:alive = false)
 	new CsTeams:team, count;
 	for(new i = 1; i <= g_iMaxPlayers; i++)
 	{
-		if(i == g_iTerrorist) continue;
-		if(!is_user_connected(i) || is_user_bot(i) || is_user_hltv(i) || alive && !is_user_alive(i)) continue;
+		if(i == g_iTerrorist || !is_user_connected(i) || alive && !is_user_alive(i)) continue;
 		team = cs_get_user_team(i);
 		if(team == CS_TEAM_UNASSIGNED || team == CS_TEAM_SPECTATOR) continue;
 		players[count++] = i;

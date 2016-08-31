@@ -9,7 +9,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "0.8.3"
+#define VERSION "1.0"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
