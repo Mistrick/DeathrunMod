@@ -134,7 +134,7 @@ native dr_set_next_terrorist(id);
  * 
  * @return				Индекс игрока.
  */
-native dr_get_next_terrorist(id);
+native dr_get_next_terrorist();
 
 /**
  * deathrun_modes_duel
