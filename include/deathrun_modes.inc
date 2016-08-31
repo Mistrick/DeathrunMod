@@ -130,6 +130,13 @@ native dr_get_terrorist();
 native dr_set_next_terrorist(id);
 
 /**
+ * Получает индекс игрока, который станет террористом в следующем раунде.
+ * 
+ * @return				Индекс игрока.
+ */
+native dr_get_next_terrorist(id);
+
+/**
  * deathrun_modes_duel
  */
 
