@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -61,8 +61,6 @@ public plugin_init()
 	
 	register_menucmd(register_menuid("ModesMenu"), 1023, "ModesMenu_Handler");
 	
-	g_aModes = ArrayCreate(ModeData);
-	
 	g_fwSelectedMode = CreateMultiForward("dr_selected_mode", ET_IGNORE, FP_CELL, FP_CELL);
 	
 	g_iMaxPlayers = get_maxplayers();
@@ -91,6 +89,8 @@ public plugin_cfg()
 }
 public plugin_natives()
 {
+	g_aModes = ArrayCreate(ModeData);
+	
 	register_library("deathrun_modes");
 	register_native("dr_register_mode", "native_register_mode");
 	register_native("dr_set_mode", "native_set_mode");
