@@ -36,8 +36,6 @@ new g_iModeSnow, g_iCurMode, g_iSprite;
 public plugin_init()
 {
 	register_plugin(PLUGIN, VERSION, AUTHOR);
-
-	register_event("HLTV", "Event_NewRound", "a", "1=0", "2=0");
 	
 	RegisterHam(Ham_Item_Deploy, "weapon_smokegrenade", "Ham_SmokeGranade_Deploy_Post", true);
 	
@@ -70,11 +68,6 @@ public plugin_precache()
 	precache_model(BALL_MODEL_P);
 	precache_model(BALL_MODEL_W);
 	g_iSprite = precache_model("sprites/zbeam3.spr");
-}
-//***** Events *****//
-public Event_NewRound()
-{
-	g_iCurMode = -1;
 }
 //***** *****//
 public dr_selected_mode(id, mode)

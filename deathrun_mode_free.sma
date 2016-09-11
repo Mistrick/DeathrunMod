@@ -4,7 +4,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Free"
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -18,12 +18,11 @@ public plugin_init()
 	register_plugin(PLUGIN, VERSION, AUTHOR);
 
 	register_event("Health", "Event_Health", "b");
-	register_event("HLTV", "Event_NewRound", "a", "1=0", "2=0");
 	
-	new szWeaponName[32], BITSUM = (1<<CSW_KNIFE);
-	for(new i = CSW_P228; i <= CSW_P90; i++)
+	new CSW_IGNORED = (1 << CSW_KNIFE);
+	for(new i = CSW_P228, szWeaponName[32]; i <= CSW_P90; i++)
 	{
-		if(~BITSUM & 1<<i && get_weaponname(i, szWeaponName, charsmax(szWeaponName)))
+		if(~CSW_IGNORED & 1<<i && get_weaponname(i, szWeaponName, charsmax(szWeaponName)))
 		{
 			RegisterHam(Ham_Item_AddToPlayer, szWeaponName, "Ham_Item_AddToPlayer_Pre", 0);
 		}
@@ -46,14 +45,9 @@ public plugin_init()
 	g_iMaxPlayers = get_maxplayers();
 }
 //***** Events *****//
-public Event_NewRound()
-{
-	g_iCurMode = -1;
-}
 public Event_Health(id)
 {
-	new iHealth = get_user_health(id);
-	if(g_iCurMode == g_iModeFree && iHealth > MAX_HEALTH)
+	if(g_iCurMode == g_iModeFree && (get_user_health(id) > MAX_HEALTH))
 	{
 		set_user_health(id, MAX_HEALTH);
 		client_print(id, print_center, "You can't have more than %d hp.", MAX_HEALTH);
@@ -67,6 +61,8 @@ public Ham_Item_AddToPlayer_Pre(ent, id)
 //***** *****//
 public dr_selected_mode(id, mode)
 {
+	g_iCurMode = mode;
+	
 	if(g_iModeFree == mode)
 	{
 		for(new i = 1; i <= g_iMaxPlayers; i++)
@@ -78,5 +74,4 @@ public dr_selected_mode(id, mode)
 			}
 		}
 	}
-	g_iCurMode = mode;
 }

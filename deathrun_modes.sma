@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -296,6 +296,8 @@ public Event_NewRound()
 	g_eCurModeInfo[m_TT_BlockWeapon] = 0;
 	g_eCurModeInfo[m_CT_BlockButtons] = 0;
 	g_eCurModeInfo[m_TT_BlockButtons] = 0;
+	
+	ExecuteForward(g_fwSelectedMode, g_fwReturn, 0, g_iCurMode + 1);
 	
 	new eModeInfo[ModeData];
 	for(new i = 0; i < g_iModesNum; i++)
