@@ -8,7 +8,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -37,6 +37,7 @@ public plugin_init()
 {
 	register_plugin(PLUGIN, VERSION, AUTHOR);
 	
+	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Post", true);
 	RegisterHam(Ham_Item_Deploy, "weapon_smokegrenade", "Ham_SmokeGranade_Deploy_Post", true);
 	
 	register_forward(FM_SetModel, "FM_SetModel_Post", true);
@@ -105,6 +106,17 @@ public Message_SendAudio(msgid, dest, reciver)
 	return PLUGIN_CONTINUE;
 }
 //****************************//
+public Ham_PlayerSpawn_Post(id)
+{
+	if(g_iCurMode == g_iCurMode)
+	{
+		if(is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_T)
+		{
+			give_item(id, "weapon_smokegrenade");
+			cs_set_user_bpammo(id, CSW_SMOKEGRENADE, SNOWBALL_AMOUNT);
+		}
+	}
+}
 public Ham_SmokeGranade_Deploy_Post(weapon)
 {
 	if(g_iCurMode != g_iModeSnow) return HAM_IGNORED;
