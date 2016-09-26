@@ -8,7 +8,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -108,7 +108,7 @@ public Message_SendAudio(msgid, dest, reciver)
 //****************************//
 public Ham_PlayerSpawn_Post(id)
 {
-	if(g_iCurMode == g_iCurMode)
+	if(g_iCurMode == g_iModeSnow)
 	{
 		if(is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_T)
 		{
