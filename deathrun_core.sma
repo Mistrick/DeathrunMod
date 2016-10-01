@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "1.0"
+#define VERSION "1.1.0"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -33,9 +33,14 @@ enum _:Cvars
 	RESTART
 };
 
+enum Forwards
+{
+	FW_NEW_TERRORIST
+};
+
 new const PREFIX[] = "^4[DRM]";
 
-new g_eCvars[Cvars], g_bWarmUp = true;
+new g_eCvars[Cvars], g_iForwards[Forwards], g_iReturn, g_bWarmUp = true;
 new g_iForwardSpawn, HamHook:g_iHamPreThink, Trie:g_tRemoveEntities;
 new g_msgShowMenu, g_msgVGUIMenu, g_msgAmmoPickup, g_msgWeapPickup;
 new g_iOldAmmoPickupBlock, g_iOldWeapPickupBlock, g_iTerrorist, g_iNextTerrorist, g_iMaxPlayers;
@@ -70,7 +75,7 @@ public plugin_init()
 	
 	register_touch("func_door", "weaponbox", "Engine_TouchFuncDoor");
 	
-	g_iHamPreThink = RegisterHam(Ham_Player_PreThink, "player", "Ham_PlayerPreThink_Post", true);
+	g_iForwards[FW_NEW_TERRORIST] = CreateMultiForward("dr_chosen_new_terrorist", ET_IGNORE, FP_CELL);
 	
 	g_msgVGUIMenu = get_user_msgid("VGUIMenu");
 	g_msgShowMenu = get_user_msgid("ShowMenu");
@@ -80,7 +85,7 @@ public plugin_init()
 	register_message(g_msgVGUIMenu, "Message_Menu");
 	register_message(g_msgShowMenu, "Message_Menu");
 	
-	DisableHamForward(g_iHamPreThink);
+	DisableHamForward(g_iHamPreThink = RegisterHam(Ham_Player_PreThink, "player", "Ham_PlayerPreThink_Post", true));
 	unregister_forward(FM_Spawn, g_iForwardSpawn, 0);
 	TrieDestroy(g_tRemoveEntities);
 	
@@ -129,6 +134,7 @@ public plugin_cfg()
 }
 public plugin_natives()
 {
+	register_library("deathrun_core");
 	register_native("dr_get_terrorist", "native_get_terrorist", 1);
 	register_native("dr_set_next_terrorist", "native_set_next_terrorist", 1);
 	register_native("dr_get_next_terrorist", "native_get_next_terrorist", 1);
@@ -165,6 +171,8 @@ public client_disconnect(id)
 			cs_set_user_team(g_iTerrorist, CS_TEAM_T);
 			ExecuteHamB(Ham_CS_RoundRespawn, g_iTerrorist);
 			engfunc(EngFunc_SetOrigin, g_iTerrorist, fOrigin);
+			
+			ExecuteForward(g_iForwards[FW_NEW_TERRORIST], g_iReturn, g_iTerrorist);
 			
 			new szName[32]; get_user_name(g_iTerrorist, szName, charsmax(szName));
 			new szNameLeaver[32]; get_user_name(id, szNameLeaver, charsmax(szNameLeaver));
@@ -239,7 +247,8 @@ TerroristCheck()
 	{
 		new players[32], pnum; get_players(players, pnum, "ae", "TERRORIST");
 		g_iTerrorist = pnum ? players[0] : 0;
-	}	
+	}
+	ExecuteForward(g_iForwards[FW_NEW_TERRORIST], g_iReturn, g_iTerrorist);
 }
 //******** Messages Credits: PRoSToTeM@ ********//
 public Message_Menu(const msg, const nDest, const nClient)

@@ -3,6 +3,15 @@
 #endif
 #define _deathrun_modes_included
 
+#if AMXX_VERSION_NUM >= 175
+	#pragma reqlib deathrun_modes
+	#if !defined AMXMODX_NOAUTOLOAD
+		#pragma loadlib deathrun_modes
+	#endif
+#else
+	#pragma library deathrun_modes
+#endif
+
 enum _:ModeData
 {
 	m_Name[32],
@@ -19,152 +28,94 @@ enum _:ModeData
 };
 
 /**
- * Регистрация режима.
+ * Mode registration.
  *
- * @param Name				Имя режима, будет отображено в меню.
- * @param Mark				Метка режима.
- * @param RoundDelay		На сколько раундов будет заблокирован режим для выбора.
- * @param CT_BlockWeapons	Позволяет блокировать взятие лежащего оружия для CT.
- * @param TT_BlockWeapons	Позволяет блокировать взятие лежащего оружия для T.
- * @param CT_BlockButtons	Позволяет блокировать использование кнопок для CT.
- * @param TT_BlockButtons	Позволяет блокировать использование кнопок для T.
- * @param Bhop				Включить/выключить автобхоп.
- * @param Usp				Включить/выключить выдачу USP для CT.
- * @param Hide				Позволяет скрывать режим в меню.
+ * @param Name				Mode name, use ML key.
+ * @param Mark				Mode mark, use this to get mode index in other plugins.
+ * @param RoundDelay		Mode blocking in rounds.
+ * @param CT_BlockWeapons	Allow CT pick up weapons.
+ * @param TT_BlockWeapons	Allow TT pick up weapons.
+ * @param CT_BlockButtons	Allow CT use buttons.
+ * @param TT_BlockButtons	Allow TT use buttons.
+ * @param Bhop				Enable autobhop.
+ * @param Usp				Enable start with USP for CT.
+ * @param Hide				Allow hide mode in menu.
  *
- * @return					Возвращает индекс режима.
+ * @return					Mode index.
  */
 native dr_register_mode(Name[32], Mark[16], RoundDelay, CT_BlockWeapons, TT_BlockWeapons, CT_BlockButtons, TT_BlockButtons, Bhop, Usp, Hide = 0);
 
 /**
- * Получение имени и индекса текущего режима.
+ * Get current mode.
  * 
- * @param name				Сюда будет скопировано имя режима.
- * @param size				Размер массива name.
+ * @param name				Mode name, here will be copied the current mode ML key.
+ * @param size				Name size.
  * 
- * @return					Возвращает индекс режима.
+ * @return					Mode index.
  */
 native dr_get_mode(name[] = "", size = 0);
 
 /**
- * Установка режима.
+ * Set new mode.
  * 
- * @param mode				Индекс режима, полученный при регистрации.
- * @param fwd				Вызывать ли форвард выбора режима(dr_selected_mode).
- * @param id				Индекс игрока от которого будет вызван форвард выбора режима.
+ * @param mode				Mode index.
+ * @param fwd				Call forward(dr_selected_mode).
+ * @param id				Player index in forward.
  */
 native dr_set_mode(mode, fwd = 0, id = 0);
 
 /**
- * Получение индекса режима по имени.
+ * Get mode by mark.
  * 
- * @param mark				Метка режима.
+ * @param mark				Mode mark.
  *
- * @return					Возвращает индекс режима.
+ * @return					Mode index.
  */
 native dr_get_mode_by_mark(mark[]);
 
 /**
- * Получение индекса режима по имени.
+ * Get full mode info.
  * 
- * @param mode				Индекс режима, полученный при регистрации.
- * @param modeinfo				Массив для получение информации о режиме.
+ * @param mode				Mode index.
+ * @param modeinfo			Info array.
  */
 native dr_get_mode_info(mode, modeinfo[ModeData]);
 
 /**
- * Установка автобхопа для текущего режима.
+ * Set mode autobhop.
  * 
- * @param bhop				0 - выключение, 1 - включение.
+ * @param bhop				0 - OFF, 1 - ON.
  */
 native dr_set_mode_bhop(bhop);
 
 /**
- * Получение значения автобхопа для текущего режима.
+ * Get mode autobhop.
  * 
- * @return					0 - выключен, 1 - включен.
+ * @return					0 - OFF, 1 - ON.
  */
 native dr_get_mode_bhop();
 
 /**
- * Установка автобхопа для конкретного игрока.
+ * Set player autobhop.
  * 
- * @note Значение bhop для режима важнее, чем для игрока.
+ * @note The value for a mode bhop more important than for the player.
  * 
- * @param id				Индекс игрока.
- * @param bhop				0 - выключение, 1 - включение.
+ * @param id				Player index.
+ * @param bhop				false - OFF, true - ON.
  */
 native dr_set_user_bhop(id, bool:bhop);
 
 /**
- * Получение значения автобхопа для конкретного игрока.
+ * Get player autobhop.
  * 
- * @param id				Индекс игрока.
+ * @param id				Player index.
  */
 native bool:dr_get_user_bhop(id);
 
 /**
- * Форвард, который вызывается после выбора режима.
+ * Forward which called when the selection mode.
  * 
- * @param id				Индекс игрока.
- * @param mode				Индекс режима.
+ * @param id				Terrorist index.
+ * @param mode				Mode index.
  */
 forward dr_selected_mode(id, mode);
-
-/**
- * deathrun_core
- */
-
-/**
- * Получение индекса текущего террориста.
- * 
- * @return					Индекс игрока.
- */
-native dr_get_terrorist();
-
-/**
- * Устанавливает игрока, который станет террористом в следующем раунде.
- * 
- * @param id				Индекс игрока.
- */
-native dr_set_next_terrorist(id);
-
-/**
- * Получает индекс игрока, который станет террористом в следующем раунде.
- * 
- * @return				Индекс игрока.
- */
-native dr_get_next_terrorist();
-
-/**
- * deathrun_modes_duel
- */
-
- /**
- * Форвард, который вызывается до начала дуэли, во время разминки.
- * 
- * @param duelist_ct			Индекс игрока.
- * @param duelist_t				Индекс игрока.
- */
-forward dr_duel_prestart(duelist_ct, duelist_t);
-
- /**
- * Форвард, который вызывается когда началась дуэль.
- * 
- * @param duelist_ct			Индекс игрока.
- * @param duelist_t				Индекс игрока.
- */
-forward dr_duel_start(duelist_ct, duelist_t);
-
- /**
- * Форвард, который вызывается когда закончилась дуэль.
- * 
- * @param winner				Индекс победителя.
- * @param looser				Индекс проигравшего.
- */
-forward dr_duel_finish(winner, looser);
-
- /**
- * Форвард, который вызывается когда отменили дуэль.
- */
-forward dr_duel_canceled();

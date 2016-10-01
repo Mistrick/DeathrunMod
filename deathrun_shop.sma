@@ -1,9 +1,12 @@
 #include <amxmodx>
 #include <cstrike>
+
+#if AMXX_VERSION_NUM < 183
 #include <colorchat>
+#endif
 
 #define PLUGIN "Deathrun: Shop"
-#define VERSION "0.1"
+#define VERSION "0.1.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1

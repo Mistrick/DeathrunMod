@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -24,6 +24,14 @@
 #define DUEL_TIME 60
 #define MAX_DISTANCE 1500
 #define MIN_DISTANCE 300
+
+enum CancelType
+{
+	CType_TimeOver,
+	CType_PlayerDisconneced,
+	CType_PlayerDied,
+	CType_ModeChanged
+};
 
 enum (+=100)
 {
@@ -127,7 +135,7 @@ public plugin_init()
 	g_iForwards[DUEL_PRESTART] = CreateMultiForward("dr_duel_prestart", ET_IGNORE, FP_CELL, FP_CELL);
 	g_iForwards[DUEL_START] = CreateMultiForward("dr_duel_start", ET_IGNORE, FP_CELL, FP_CELL);
 	g_iForwards[DUEL_FINISH] = CreateMultiForward("dr_duel_finish", ET_IGNORE, FP_CELL, FP_CELL);
-	g_iForwards[DUEL_CANCELED] = CreateMultiForward("dr_duel_canceled", ET_IGNORE);
+	g_iForwards[DUEL_CANCELED] = CreateMultiForward("dr_duel_canceled", ET_IGNORE, FP_CELL);
 	
 	g_iModeDuel = dr_register_mode
 	(
@@ -160,6 +168,10 @@ public plugin_cfg()
 {
 	register_dictionary("deathrun_mode_duel.txt");
 	LoadSpawns();
+}
+public plugin_natives()
+{
+	register_library("deathrun_duel");
 }
 LoadSpawns()
 {
@@ -258,7 +270,7 @@ public client_disconnect(id)
 	if((g_bDuelStarted) && (id == g_iDuelPlayers[DUELIST_CT] || id == g_iDuelPlayers[DUELIST_T]))
 	{
 		ResetDuel();
-		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
+		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn, CType_PlayerDisconneced);
 	}
 }
 public Command_Drop(id)
@@ -502,7 +514,7 @@ public Task_DuelTimer()
 		ExecuteHam(Ham_Killed, g_iDuelPlayers[DUELIST_CT], g_iDuelPlayers[DUELIST_CT], 0);
 		ExecuteHam(Ham_Killed, g_iDuelPlayers[DUELIST_T], g_iDuelPlayers[DUELIST_T], 0);
 		
-		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
+		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn, CType_TimeOver);
 		ResetDuel();
 		
 		client_print_color(0, print_team_default, "%s^1 %L", PREFIX, LANG_PLAYER, "DRD_TIME_OVER");
@@ -624,7 +636,7 @@ public Ham_PlayerKilled_Post(victim, killer)
 		}
 		else
 		{
-			ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
+			ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn, CType_PlayerDied);
 		}
 		ResetDuel();
 	}
@@ -675,7 +687,7 @@ public dr_selected_mode(id, mode)
 	if(g_bDuelStarted && mode != g_iModeDuel)
 	{
 		ResetDuel();
-		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn);
+		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn, CType_ModeChanged);
 	}
 }
 ResetDuel()
