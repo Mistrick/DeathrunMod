@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -67,7 +67,6 @@ public plugin_init()
 	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Post", true);
 	RegisterHam(Ham_Killed, "player", "Ham_PlayerKilled_Post", true);
 	RegisterHam(Ham_Use, "func_button", "Ham_UseButton_Pre", false);
-	RegisterHam(Ham_Use, "func_door", "Ham_UseDoor_Pre", false);
 	RegisterHam(Ham_TakeDamage, "player", "Ham_TakeDamage_Pre", false);
 	
 	register_forward(FM_ClientKill, "FM_ClientKill_Pre", false);
@@ -92,6 +91,7 @@ public plugin_init()
 	set_task(WARMUP_TIME, "Task_WarmupOff");
 	
 	Block_Commands();
+	CheckMap();
 	
 	g_iMaxPlayers = get_maxplayers();
 }
@@ -99,6 +99,19 @@ public Task_WarmupOff()
 {
 	g_bWarmUp = false;
 	set_pcvar_num(g_eCvars[RESTART], 1);
+}
+CheckMap()
+{
+	new allowed_maps[][] =
+	{
+		"deathrun_army_fixed"
+	};
+	new map[32]; get_mapname(map, charsmax(map));
+	for(new i; i < sizeof(allowed_maps); i++)
+	{
+		if(equali(map, allowed_maps[i])) return;
+	}
+	RegisterHam(Ham_Use, "func_door", "Ham_UseDoor_Pre", false);
 }
 public plugin_precache()
 {
@@ -336,7 +349,7 @@ public Ham_UseButton_Pre(ent, caller, activator, use_type)
 }
 public Ham_UseDoor_Pre(ent, caller, activator, use_type)
 {
-	return IsPlayer(activator) ? HAM_SUPERCEDE : HAM_IGNORED;
+	return (use_type == 2) && IsPlayer(activator) ? HAM_SUPERCEDE : HAM_IGNORED;
 }
 public Ham_TakeDamage_Pre(id, inflictor, attacker, Float:damage, damage_bits)
 {
