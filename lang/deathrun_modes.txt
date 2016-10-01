@@ -15,6 +15,7 @@ DRM_MODE_FREE = Free
 DRM_MODE_INVIS = Invis
 DRM_MODE_SNOW = Snow
 DRM_MODE_DUEL = Duel
+DRM_MODE_RAMBO = Rambo
 
 [ru]
 DRM_BHOP_MSG = Bhop^3 %L^1.
@@ -33,6 +34,7 @@ DRM_MODE_FREE = Свободный
 DRM_MODE_INVIS = Невидимка
 DRM_MODE_SNOW = Снежки
 DRM_MODE_DUEL = Дуэль
+DRM_MODE_RAMBO = Рембо
 
 [bp]
 DRM_BHOP_MSG = O Bhop eh^3 %L^1.
@@ -51,6 +53,7 @@ DRM_MODE_FREE = Free
 DRM_MODE_INVIS = Invis
 DRM_MODE_SNOW = Snow
 DRM_MODE_DUEL = Duel
+DRM_MODE_RAMBO = Rambo
 
 [tr]
 DRM_BHOP_MSG = Bhop ^3 %L^1.
@@ -69,3 +72,4 @@ DRM_MODE_FREE = Free
 DRM_MODE_INVIS = Invis
 DRM_MODE_SNOW = Snow
 DRM_MODE_DUEL = Duel
+DRM_MODE_RAMBO = Rambo
