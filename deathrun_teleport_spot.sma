@@ -4,7 +4,7 @@
 #include <hamsandwich>
 
 #define PLUGIN "Deathrun: Teleport Spot"
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -12,9 +12,10 @@
 #define RETURN_DAMAGE_TO_ATTACKER
 #define TP_CHECK_DISTANCE 64.0
 
+#define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
 #define fm_get_user_team(%0) get_pdata_int(%0, 114)
 
-new player_solid[33];
+new player_solid[33], g_iMaxPlayers;
 
 public plugin_init()
 {
@@ -29,10 +30,11 @@ public plugin_init()
 	}
 	
 	RegisterHam(Ham_TakeDamage, "player", "Ham_PlayerTakeDamage_Pre", false);
+	g_iMaxPlayers = get_maxplayers();
 }
 public Ham_PlayerTakeDamage_Pre(victim, idinflictor, attacker, Float:damage, damagebits)
 {
-	if(victim != attacker && fm_get_user_team(victim) != fm_get_user_team(attacker))
+	if(victim != attacker && IsPlayer(attacker) && fm_get_user_team(victim) != fm_get_user_team(attacker))
 	{
 		new Float:origin[3]; pev(victim, pev_origin, origin);
 		new ent = -1;
