@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "1.1.1"
+#define VERSION "1.1.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -60,9 +60,6 @@ public plugin_init()
 	
 	register_clcmd("chooseteam", "Command_ChooseTeam");
 	
-	register_event("HLTV", "Event_NewRound", "a", "1=0", "2=0");
-	register_logevent("Event_RoundStart", 2, "1=Round_Start");
-	
 	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Pre", false);
 	RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Post", true);
 	RegisterHam(Ham_Killed, "player", "Ham_PlayerKilled_Post", true);
@@ -102,6 +99,13 @@ public Task_WarmupOff()
 }
 CheckMap()
 {
+	new ent = find_ent_by_class(-1, "info_player_deathmatch");
+	if(is_valid_ent(ent))
+	{
+		register_event("HLTV", "Event_NewRound", "a", "1=0", "2=0");
+		register_logevent("Event_RoundStart", 2, "1=Round_Start");
+	}
+	
 	new allowed_maps[][] =
 	{
 		"deathrun_army_fixed"
@@ -264,13 +268,13 @@ TerroristCheck()
 	ExecuteForward(g_iForwards[FW_NEW_TERRORIST], g_iReturn, g_iTerrorist);
 }
 //******** Messages Credits: PRoSToTeM@ ********//
-public Message_Menu(const msg, const nDest, const nClient)
+public Message_Menu(const msg, const dest, const id)
 {
 	const MENU_TEAM = 2;
 	const SHOWTEAMSELECT = 3;
 	const Menu_ChooseTeam = 1;
-	const m_iJoiningState = 121;
 	const m_iMenu = 205;
+	const m_iJoiningState = 121;
 	
 	if (msg == g_msgShowMenu)
 	{
@@ -285,11 +289,11 @@ public Message_Menu(const msg, const nDest, const nClient)
 		return PLUGIN_CONTINUE;
 	}
 
-	if (get_pdata_int(nClient, m_iMenu) == Menu_ChooseTeam || get_pdata_int(nClient, m_iJoiningState) != SHOWTEAMSELECT)
+	if (get_pdata_int(id, m_iMenu) == Menu_ChooseTeam || get_pdata_int(id, m_iJoiningState) != SHOWTEAMSELECT)
 	{
 		return PLUGIN_CONTINUE;
 	}
-
+	
 	EnableHamForward(g_iHamPreThink);
 
 	return PLUGIN_HANDLED;
@@ -362,7 +366,7 @@ public Ham_TakeDamage_Pre(id, inflictor, attacker, Float:damage, damage_bits)
 public Ham_PlayerPreThink_Post(id)
 {
 	DisableHamForward(g_iHamPreThink);
-
+	
 	new iOldShowMenuBlock = get_msg_block(g_msgShowMenu);
 	new iOldVGUIMenuBlock = get_msg_block(g_msgVGUIMenu);
 	set_msg_block(g_msgShowMenu, BLOCK_SET);
