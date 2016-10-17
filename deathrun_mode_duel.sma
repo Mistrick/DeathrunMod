@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -666,7 +666,7 @@ Show_DuelOffer(id)
 	
 	show_menu(id, (1 << 0)|(1 << 1), szMenu, -1, "DuelOfferMenu");
 }
-public DuelOffer_Handler(id, menu, item)
+public DuelOffer_Handler(id, item)
 {
 	if(item == 0)
 	{
