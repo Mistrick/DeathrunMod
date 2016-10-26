@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "1.1.2"
+#define VERSION "1.1.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -229,6 +229,8 @@ public Event_NewRound()
 }
 TeamBalance()
 {
+	if(g_bWarmUp) return;
+	
 	new iPlayers[32], iNum, iPlayer; iNum = _get_players(iPlayers, false);
 	
 	if(iNum < 1 || iNum == 1 && !is_user_connected(g_iTerrorist)) return;
@@ -338,18 +340,30 @@ public Task_Respawn(id)
 public Ham_UseButton_Pre(ent, caller, activator, use_type)
 {
 	if(!IsPlayer(activator) || !is_user_alive(activator) || cs_get_user_team(activator) == CS_TEAM_T) return HAM_IGNORED;
-		
-	new Float:fMin[3], Float:fMax[3], Float:fEntOrigin[3];
-	pev(ent, pev_absmin, fMin); pev(ent, pev_absmax, fMax);
-	xs_vec_add(fMin, fMax, fEntOrigin);
-	xs_vec_mul_scalar(fEntOrigin, 0.5, fEntOrigin);
 	
-	new iPlayerOrigin[3]; get_user_origin(activator, iPlayerOrigin, 1);
-	new Float:fPlayerOrigin[3]; IVecFVec(iPlayerOrigin, fPlayerOrigin);
+	new Float:fEntOrigin[3], Float:fPlayerOrigin[3];
+	fEntOrigin = get_ent_brash_origin(ent);
+	fPlayerOrigin = get_player_eyes_origin(activator);
 	
 	new bool:bCanUse = allow_press_button(ent, fPlayerOrigin, fEntOrigin);
 	
 	return bCanUse ? HAM_IGNORED : HAM_SUPERCEDE;
+}
+Float:get_ent_brash_origin(ent)
+{
+	new Float:origin[3], Float:mins[3], Float:maxs[3];
+	pev(ent, pev_absmin, mins);
+	pev(ent, pev_absmax, maxs);
+	xs_vec_add(mins, maxs, origin);
+	xs_vec_mul_scalar(origin, 0.5, origin);
+	return origin;
+}
+Float:get_player_eyes_origin(id)
+{
+	new Float:origin[3], eyes_origin[3];
+	get_user_origin(id, eyes_origin, 1);
+	IVecFVec(eyes_origin, origin);
+	return origin;
 }
 public Ham_UseDoor_Pre(ent, caller, activator, use_type)
 {
