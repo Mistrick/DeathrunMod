@@ -5,7 +5,7 @@
 #include <hamsandwich>
 
 #define PLUGIN "Deathrun: Buttons Control"
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -14,6 +14,8 @@
 #define BUTTON_MIN_DELAY 5.0
 #define BUTTON_MAX_USE 1
 
+#define PDATA_SAFE 2
+
 #define get_button_index(%0) (pev(%0, pev_iuser4) - 1)
 #define set_button_index(%0,%1) set_pev(%0, pev_iuser4, %1)
 #define fm_get_user_team(%0) get_pdata_int(%0, 114)
@@ -21,7 +23,7 @@
 const m_flWait = 44;
 const XO_CBASETOGGLE1 = 4;
 
-new const g_szButtons[][] = {"func_button", "func_rot_button", "button_target"};
+new const g_szButtons[][] = {"func_button", "func_rot_button"};
 
 new g_iButtonsEnt[MAX_BUTTONS];
 new g_iButtonsCount;
@@ -58,7 +60,6 @@ LoadButtons()
 				set_pdata_float(ent, m_flWait, BUTTON_MIN_DELAY, XO_CBASETOGGLE1);
 			}
 		}
-		
 		#if BUTTON_MAX_USE > 0
 		if(last_count < g_iButtonsCount)
 		{
@@ -92,7 +93,7 @@ RestoreButtons()
 #if BUTTON_MAX_USE > 0
 public Ham_ButtonUse_Pre(ent, caller, activator, use_type)
 {
-	if(caller != activator) return HAM_IGNORED;
+	if(caller != activator || pev_valid(caller) != PDATA_SAFE) return HAM_IGNORED;
 	
 	if(pev(ent, pev_frame) > 0.0) return HAM_IGNORED;
 	
