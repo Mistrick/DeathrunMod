@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "1.1.3"
+#define VERSION "1.1.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -19,6 +19,7 @@
 #define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
 
 #define WARMUP_TIME 15.0
+#define HEALER_MAX_HEALTH 150.0
 
 enum (+=100)
 {
@@ -65,6 +66,7 @@ public plugin_init()
 	RegisterHam(Ham_Killed, "player", "Ham_PlayerKilled_Post", true);
 	RegisterHam(Ham_Use, "func_button", "Ham_UseButton_Pre", false);
 	RegisterHam(Ham_TakeDamage, "player", "Ham_TakeDamage_Pre", false);
+	RegisterHam(Ham_TraceAttack, "player", "Ham_TraceAttack_Pre", false);
 	
 	register_forward(FM_ClientKill, "FM_ClientKill_Pre", false);
 	register_forward(FM_GetGameDescription, "FM_GetGameDescription_Pre", false);
@@ -100,22 +102,22 @@ public Task_WarmupOff()
 CheckMap()
 {
 	new ent = find_ent_by_class(-1, "info_player_deathmatch");
+	
 	if(is_valid_ent(ent))
 	{
 		register_event("HLTV", "Event_NewRound", "a", "1=0", "2=0");
 		register_logevent("Event_RoundStart", 2, "1=Round_Start");
 	}
 	
-	new allowed_maps[][] =
+	ent = -1;
+	while ((ent = engfunc(EngFunc_FindEntityByString, ent, "classname", "func_door")))
 	{
-		"deathrun_army_fixed"
-	};
-	new map[32]; get_mapname(map, charsmax(map));
-	for(new i; i < sizeof(allowed_maps); i++)
-	{
-		if(equali(map, allowed_maps[i])) return;
+		new spawnflags = pev(ent, pev_spawnflags);
+		if ((spawnflags & SF_DOOR_USE_ONLY) && UTIL_IsTargetActivate(ent))
+		{
+			set_pev(ent, pev_spawnflags, spawnflags & ~SF_DOOR_USE_ONLY);
+		}
 	}
-	RegisterHam(Ham_Use, "func_door", "Ham_UseDoor_Pre", false);
 }
 public plugin_precache()
 {
@@ -365,15 +367,27 @@ Float:get_player_eyes_origin(id)
 	IVecFVec(eyes_origin, origin);
 	return origin;
 }
-public Ham_UseDoor_Pre(ent, caller, activator, use_type)
+public Ham_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damage_bits)
 {
-	return (use_type == 2) && IsPlayer(activator) ? HAM_SUPERCEDE : HAM_IGNORED;
-}
-public Ham_TakeDamage_Pre(id, inflictor, attacker, Float:damage, damage_bits)
-{
-	if(damage_bits & DMG_FALL && get_pcvar_num(g_eCvars[BLOCK_FALLDMG]) && cs_get_user_team(id) == CS_TEAM_T)
+	if(damage < 0.0)
+	{
+		new Float:health; pev(victim, pev_health, health);
+		if(health - damage > HEALER_MAX_HEALTH)
+		return HAM_SUPERCEDE;
+	}
+	if(damage_bits & DMG_FALL && get_pcvar_num(g_eCvars[BLOCK_FALLDMG]) && cs_get_user_team(victim) == CS_TEAM_T)
 	{
 		return HAM_SUPERCEDE;
+	}
+	return HAM_IGNORED;
+}
+public Ham_TraceAttack_Pre(victim, idattacker, Float:damage, Float:direction[3], trace_result, damagebits)
+{
+	if(damage < 0.0)
+	{
+		new Float:health; pev(victim, pev_health, health);
+		if(health - damage > HEALER_MAX_HEALTH)
+			return HAM_SUPERCEDE;
 	}
 	return HAM_IGNORED;
 }
@@ -454,4 +468,9 @@ stock bool:allow_press_button(ent, Float:start[3], Float:end[3], bool:ignore_pla
 	if(fVolume[0] < 32.0 && fVolume[1] < 32.0 && fVolume[2] < 32.0) return true;
 	
 	return false;
+}
+stock bool:UTIL_IsTargetActivate(const ent)
+{
+	new target_name[32]; pev(ent, pev_targetname, target_name, charsmax(target_name));
+	return (target_name[0]) ? false : true;
 }
