@@ -6,7 +6,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Shop"
-#define VERSION "0.1.1"
+#define VERSION "0.1.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -163,7 +163,8 @@ public ShopMenu_Handler(id, menu, item)
 {
 	if(item == MENU_EXIT)
 	{
-		menu_destroy(menu); return;
+		menu_destroy(menu);
+		return PLUGIN_HANDLED;
 	}
 	
 	new iAccess, szInfo[2], hCallback;
@@ -178,7 +179,7 @@ public ShopMenu_Handler(id, menu, item)
 	if((~eItemInfo[ItemTeam] & team) || GetCanBuyAnswer(id, eItemInfo[ItemCanBuy]) != ITEM_ENABLED)
 	{
 		client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRS_CANT_BUY");
-		return;
+		return PLUGIN_HANDLED;
 	}
 	
 	new money = cs_get_user_money(id) - eItemInfo[ItemCost];
@@ -198,6 +199,7 @@ public ShopMenu_Handler(id, menu, item)
 	}
 	
 	Show_ShopMenu(id, item / 7);
+	return PLUGIN_HANDLED;
 }
 GetCanBuyAnswer(id, callback)
 {
