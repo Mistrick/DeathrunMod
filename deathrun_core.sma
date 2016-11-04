@@ -465,7 +465,7 @@ stock bool:allow_press_button(ent, Float:start[3], Float:end[3], bool:ignore_pla
 	new Float:fAbsMax[3]; pev(hit_ent, pev_absmax, fAbsMax);
 	new Float:fVolume[3]; xs_vec_sub(fAbsMax, fAbsMin, fVolume);
 	
-	if(fVolume[0] < 32.0 && fVolume[1] < 32.0 && fVolume[2] < 32.0) return true;
+	if(fVolume[0] < 48.0 && fVolume[1] < 48.0 && fVolume[2] < 48.0) return true;
 	
 	return false;
 }
