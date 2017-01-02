@@ -4,7 +4,7 @@
 #include <hamsandwich>
 
 #define PLUGIN "Deathrun: Teleport Spot"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -58,10 +58,15 @@ public Ham_PlayerTakeDamage_Pre(victim, idinflictor, attacker, Float:damage, dam
 }
 slap(id)
 {
-	player_solid[id] = pev(id, pev_solid);
+	new solid = pev(id, pev_solid);
+	if(solid != SOLID_NOT) player_solid[id] = solid;
+	
 	set_pev(id, pev_solid, SOLID_NOT);
+	
 	user_slap(id, 0);
 	user_slap(id, 0);
+	
+	remove_task(id);
 	set_task(0.3, "restore_solid", id);
 }
 public restore_solid(id)
