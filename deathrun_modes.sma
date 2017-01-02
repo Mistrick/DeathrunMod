@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -41,6 +41,8 @@ new g_iPage[33], g_iTimer[33], bool:g_bBhop[33];
 
 new g_fwSelectedMode, g_fwReturn;
 
+new g_hDisableItem;
+
 public plugin_init()
 {
 	register_plugin(PLUGIN, VERSION, AUTHOR);
@@ -62,6 +64,8 @@ public plugin_init()
 	register_menucmd(register_menuid("ModesMenu"), 1023, "ModesMenu_Handler");
 	
 	g_fwSelectedMode = CreateMultiForward("dr_selected_mode", ET_IGNORE, FP_CELL, FP_CELL);
+	
+	g_hDisableItem = menu_makecallback("DisableItem");
 	
 	g_iMaxPlayers = get_maxplayers();
 	
@@ -118,20 +122,20 @@ public native_register_mode(plugin, params)
 		arg_hide
 	};
 	
-	new eModeInfo[ModeData];
+	new mode_info[ModeData];
 	
-	get_string(arg_name, eModeInfo[m_Name], charsmax(eModeInfo[m_Name]));
-	get_string(arg_mark, eModeInfo[m_Mark], charsmax(eModeInfo[m_Mark]));
-	eModeInfo[m_RoundDelay] = get_param(arg_round_delay);
-	eModeInfo[m_CT_BlockWeapon] = get_param(arg_ct_block_weapons);
-	eModeInfo[m_TT_BlockWeapon] = get_param(arg_tt_block_weapons);
-	eModeInfo[m_CT_BlockButtons] = get_param(arg_ct_block_buttons);
-	eModeInfo[m_TT_BlockButtons] = get_param(arg_tt_block_buttons);
-	eModeInfo[m_Bhop] = get_param(arg_bhop);
-	eModeInfo[m_Usp] = get_param(arg_usp);
-	eModeInfo[m_Hide] = get_param(arg_hide);
+	get_string(arg_name, mode_info[m_Name], charsmax(mode_info[m_Name]));
+	get_string(arg_mark, mode_info[m_Mark], charsmax(mode_info[m_Mark]));
+	mode_info[m_RoundDelay] = get_param(arg_round_delay);
+	mode_info[m_CT_BlockWeapon] = get_param(arg_ct_block_weapons);
+	mode_info[m_TT_BlockWeapon] = get_param(arg_tt_block_weapons);
+	mode_info[m_CT_BlockButtons] = get_param(arg_ct_block_buttons);
+	mode_info[m_TT_BlockButtons] = get_param(arg_tt_block_buttons);
+	mode_info[m_Bhop] = get_param(arg_bhop);
+	mode_info[m_Usp] = get_param(arg_usp);
+	mode_info[m_Hide] = get_param(arg_hide);
 	
-	ArrayPushArray(g_aModes, eModeInfo);
+	ArrayPushArray(g_aModes, mode_info);
 	g_iModesNum++;
 	
 	return g_iModesNum;
@@ -192,10 +196,10 @@ public native_get_mode_by_mark(plugin, params)
 	
 	new mark[16]; get_string(arg_mark, mark, charsmax(mark));
 	
-	for(new mode_index, eModeInfo[ModeData]; mode_index < g_iModesNum; mode_index++)
+	for(new mode_index, mode_info[ModeData]; mode_index < g_iModesNum; mode_index++)
 	{
-		ArrayGetArray(g_aModes, mode_index, eModeInfo);
-		if(equali(mark, eModeInfo[m_Mark]))
+		ArrayGetArray(g_aModes, mode_index, mode_info);
+		if(equali(mark, mode_info[m_Mark]))
 		{
 			return mode_index + 1;
 		}
@@ -219,8 +223,8 @@ public native_get_mode_info(plugin, params)
 		return 0;
 	}
 	
-	new eModeInfo[ModeData]; ArrayGetArray(g_aModes, mode_index, eModeInfo);
-	set_array(arg_info, eModeInfo, ModeData);
+	new mode_info[ModeData]; ArrayGetArray(g_aModes, mode_index, mode_info);
+	set_array(arg_info, mode_info, ModeData);
 	
 	return 1;
 }
@@ -299,14 +303,14 @@ public Event_NewRound()
 	
 	ExecuteForward(g_fwSelectedMode, g_fwReturn, 0, g_iCurMode + 1);
 	
-	new eModeInfo[ModeData];
+	new mode_info[ModeData];
 	for(new i = 0; i < g_iModesNum; i++)
 	{
-		ArrayGetArray(g_aModes, i, eModeInfo);
-		if(eModeInfo[m_CurDelay])
+		ArrayGetArray(g_aModes, i, mode_info);
+		if(mode_info[m_CurDelay])
 		{
-			eModeInfo[m_CurDelay]--;
-			ArraySetArray(g_aModes, i, eModeInfo);
+			mode_info[m_CurDelay]--;
+			ArraySetArray(g_aModes, i, mode_info);
 		}
 	}
 	for(new id = 1; id <= g_iMaxPlayers; id++)
@@ -316,12 +320,12 @@ public Event_NewRound()
 }
 public Event_Restart()
 {
-	new eModeInfo[ModeData];
+	new mode_info[ModeData];
 	for(new i = 0; i < g_iModesNum; i++)
 	{
-		ArrayGetArray(g_aModes, i, eModeInfo);
-		eModeInfo[m_CurDelay] = 0;
-		ArraySetArray(g_aModes, i, eModeInfo);
+		ArrayGetArray(g_aModes, i, mode_info);
+		mode_info[m_CurDelay] = 0;
+		ArraySetArray(g_aModes, i, mode_info);
 	}
 }
 //***** Ham *****//
@@ -334,13 +338,13 @@ public Ham_PlayerJump_Pre(id)
 	if(flags & FL_WATERJUMP || pev(id, pev_waterlevel) >= 2 || !(flags & FL_ONGROUND))
 		return HAM_IGNORED;
 
-	new Float:fVelocity[3];
+	new Float:velocity[3];
 	
-	pev(id, pev_velocity, fVelocity);
+	pev(id, pev_velocity, velocity);
 	
-	fVelocity[2] = 250.0;
+	velocity[2] = 250.0;
 	
-	set_pev(id, pev_velocity, fVelocity);
+	set_pev(id, pev_velocity, velocity);
 	set_pev(id, pev_gaitsequence, 6);
 	set_pev(id, pev_fuser2, 0.0);
 	
@@ -350,9 +354,9 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 {
 	if(!IsPlayer(activator)) return HAM_IGNORED;
 	
-	new CsTeams:iTeam = cs_get_user_team(activator);
+	new CsTeams:team = cs_get_user_team(activator);
 	
-	if(g_iCurMode == NONE_MODE && iTeam == CS_TEAM_T)
+	if(g_iCurMode == NONE_MODE && team == CS_TEAM_T)
 	{
 		dr_set_mode(g_iModeButtons, 1, activator);
 		show_menu(activator, 0, "^n");
@@ -360,7 +364,7 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 		return HAM_IGNORED;
 	}
 	
-	if(iTeam == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockButtons] || iTeam == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockButtons])
+	if(team == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockButtons] || team == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockButtons])
 	{
 		return HAM_SUPERCEDE;
 	}
@@ -371,9 +375,9 @@ public Ham_TouchItems_Pre(ent, id)
 {
 	if(!IsPlayer(id) || g_iCurMode == NONE_MODE) return HAM_IGNORED;
 	
-	new CsTeams:iTeam = cs_get_user_team(id);
+	new CsTeams:team = cs_get_user_team(id);
 	
-	if(iTeam == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockWeapon] || iTeam == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockWeapon])
+	if(team == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockWeapon] || team == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockWeapon])
 	{
 		return HAM_SUPERCEDE;
 	}
@@ -386,15 +390,15 @@ public Ham_PlayerSpawn_Post(id)
 	
 	set_user_rendering(id);
 	
-	new CsTeams:iTeam = cs_get_user_team(id);
+	new CsTeams:team = cs_get_user_team(id);
 	
-	if(g_eCurModeInfo[m_Usp] && iTeam == CS_TEAM_CT)
+	if(g_eCurModeInfo[m_Usp] && team == CS_TEAM_CT)
 	{
 		give_item(id, "weapon_usp");
 		cs_set_user_bpammo(id, CSW_USP, 100);
 	}
 	
-	if(g_iCurMode != NONE_MODE  || iTeam != CS_TEAM_T) return HAM_IGNORED;
+	if(g_iCurMode != NONE_MODE  || team != CS_TEAM_T) return HAM_IGNORED;
 	
 	g_iTimer[id] = TIMER + 1;
 	g_iPage[id] = 0;
@@ -402,102 +406,78 @@ public Ham_PlayerSpawn_Post(id)
 	
 	return HAM_IGNORED;
 }
-public Show_ModesMenu(id, iPage)
+public Show_ModesMenu(id)
 {
-	if(iPage < 0) return PLUGIN_HANDLED;
+	new text[64]; formatex(text, charsmax(text), "%L^n^n%L ", id, "DRM_MENU_SELECT_MODE", id, "DRM_MENU_TIMELEFT", g_iTimer[id]);
+	new menu = menu_create(text, "ModesMenu_Handler");
 	
-	new iMax = g_iModesNum;
-	new i = min(iPage * 8, iMax);
-	new iStart = i - (i % 8);
-	new iEnd = min(iStart + 8, iMax);
-	
-	iPage = iStart / 8;
-	g_iPage[id] = iPage;
-	
-	new szMenu[512], iLen, Item, iKey, eModeInfo[ModeData];
-	
-	iLen = formatex(szMenu, charsmax(szMenu), "%L^n^n", id, "DRM_MENU_SELECT_MODE");
-	
-	for (i = iStart; i < iEnd; i++)
+	new mode_info[ModeData];
+	for(new i, item[2], len; i < g_iModesNum; i++)
 	{
-		ArrayGetArray(g_aModes, i, eModeInfo);
+		ArrayGetArray(g_aModes, i, mode_info);
 		
-		if(eModeInfo[m_Hide]) continue;
+		if(mode_info[m_Hide]) continue;
 		
-		if(eModeInfo[m_CurDelay] > 0)
+		len = formatex(text, charsmax(text), "%L", id, mode_info[m_Name]);
+		if(mode_info[m_CurDelay] > 0)
 		{
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\d%d. %L[\r%d\d]^n", ++Item, id, eModeInfo[m_Name], eModeInfo[m_CurDelay]);
+			formatex(text[len], charsmax(text) - len, "[\r%d\d]", mode_info[m_CurDelay]);
 		}
-		else
-		{
-			iKey |= (1 << Item);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r%d.\w %L^n", ++Item, id, eModeInfo[m_Name]);
-		}
+		
+		item[0] = i;
+		
+		menu_additem(menu, text, item, 0, mode_info[m_CurDelay] ? g_hDisableItem : -1);
 	}
 	
-	if(iMax > 8)
-	{
-		while(Item <= 8)
-		{
-			Item++;
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n");
-		}
-		
-		if (iEnd < iMax)
-		{
-			iKey |= (1 << 8);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n\r9.\w %L^n", id, "DRM_MENU_NEXT");
-			if(iPage)
-			{
-				iKey |= (1 << 9);
-				iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "\r0.\w %L^n", id, "DRM_MENU_BACK");
-			}
-		}
-		else if(iPage)
-		{
-			iKey |= (1 << 9);
-			iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n^n\r0.\w %L^n", id, "DRM_MENU_BACK");
-		}
-	}
+	formatex(text, charsmax(text), "%L", id, "DRM_MENU_BACK");
+	menu_setprop(menu, MPROP_BACKNAME, text);
+	formatex(text, charsmax(text), "%L", id, "DRM_MENU_NEXT");
+	menu_setprop(menu, MPROP_NEXTNAME, text);
 	
-	iLen += formatex(szMenu[iLen], charsmax(szMenu) - iLen, "^n%L", id, "DRM_MENU_TIMELEFT", g_iTimer[id]);
+	menu_setprop(menu, MPROP_EXIT, MEXIT_NEVER);
 	
-	show_menu(id, iKey, szMenu, -1, "ModesMenu");
+	new _menu, _newmenu, _menupage;
+	player_menu_info(id, _menu, _newmenu, _menupage);
+	
+	new page = (_newmenu != -1 && menu_items(menu) == menu_items(_newmenu)) ? _menupage : 0;
+	menu_display(id, menu, page);
 	
 	return PLUGIN_HANDLED;
 }
-public ModesMenu_Handler(id, key)
+public ModesMenu_Handler(id, menu, item)
 {
-	if(g_iCurMode != NONE_MODE || cs_get_user_team(id) != CS_TEAM_T) return PLUGIN_HANDLED;
-	
-	switch(key)
+	if(item == MENU_EXIT)
 	{
-		case 8: Show_ModesMenu(id, ++g_iPage[id]);
-		case 9: Show_ModesMenu(id, --g_iPage[id]);
-		default:
-		{
-			new iMode = key + g_iPage[id] * 8;
-			iMode += get_hidden_modes(iMode);
-			
-			g_iCurMode = iMode;
-			
-			ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
-			
-			if(g_eCurModeInfo[m_RoundDelay])
-			{
-				g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
-				ArraySetArray(g_aModes, iMode, g_eCurModeInfo);
-			}
-			
-			CheckUsp();
-			
-			remove_task(id + TASK_SHOWMENU);
-			ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);			
-			client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
-		}
+		menu_destroy(menu);
+		return PLUGIN_HANDLED;
 	}
 	
+	new info[2], stuff;
+	menu_item_getinfo(menu, item, stuff, info, charsmax(info), _, _, stuff);
+	
+	new mode = info[0];
+	g_iCurMode = mode;
+	
+	ArrayGetArray(g_aModes, mode, g_eCurModeInfo);
+	
+	if(g_eCurModeInfo[m_RoundDelay])
+	{
+		g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
+		ArraySetArray(g_aModes, mode, g_eCurModeInfo);
+	}
+	
+	CheckUsp();
+	
+	remove_task(id + TASK_SHOWMENU);
+	ExecuteForward(g_fwSelectedMode, g_fwReturn, id, mode + 1);			
+	client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
+	
+	menu_destroy(menu);
 	return PLUGIN_HANDLED;
+}
+public DisableItem(id, menu, item)
+{
+	return ITEM_DISABLED;
 }
 public Task_MenuTimer(id)
 {
@@ -511,40 +491,40 @@ public Task_MenuTimer(id)
 	{
 		show_menu(id, 0, "^n");
 		
-		new iMode;
+		new mode;
 		
 		if(!is_all_modes_blocked())
 		{
 			do {
-				iMode = random(g_iModesNum);
-				ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
+				mode = random(g_iModesNum);
+				ArrayGetArray(g_aModes, mode, g_eCurModeInfo);
 			} while(g_eCurModeInfo[m_CurDelay] || g_eCurModeInfo[m_Hide]);
 		}
 		else
 		{
 			do {
-				iMode = random(g_iModesNum);
-				ArrayGetArray(g_aModes, iMode, g_eCurModeInfo);
+				mode = random(g_iModesNum);
+				ArrayGetArray(g_aModes, mode, g_eCurModeInfo);
 			} while(g_eCurModeInfo[m_Hide]);
 		}
 		
-		g_iCurMode = iMode;
+		g_iCurMode = mode;
 		
 		if(g_eCurModeInfo[m_RoundDelay])
 		{
 			g_eCurModeInfo[m_CurDelay] = g_eCurModeInfo[m_RoundDelay] + 1;
-			ArraySetArray(g_aModes, iMode, g_eCurModeInfo);
+			ArraySetArray(g_aModes, mode, g_eCurModeInfo);
 		}
 		
 		CheckUsp();
 		
-		ExecuteForward(g_fwSelectedMode, g_fwReturn, id, iMode + 1);
+		ExecuteForward(g_fwSelectedMode, g_fwReturn, id, mode + 1);
 		
 		client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
 	}
 	else
 	{
-		Show_ModesMenu(id, g_iPage[id]);
+		Show_ModesMenu(id);
 		set_task(1.0, "Task_MenuTimer", id + TASK_SHOWMENU);
 	}
 }
@@ -576,21 +556,11 @@ CheckUsp()
 //*****  *****//
 bool:is_all_modes_blocked()
 {
-	new eModeInfo[ModeData];
+	new mode_info[ModeData];
 	for(new i; i < g_iModesNum; i++)
 	{
-		ArrayGetArray(g_aModes, i, eModeInfo);
-		if(!eModeInfo[m_CurDelay] && !eModeInfo[m_Hide]) return false;
+		ArrayGetArray(g_aModes, i, mode_info);
+		if(!mode_info[m_CurDelay] && !mode_info[m_Hide]) return false;
 	}
 	return true;
-}
-get_hidden_modes(last_mode)
-{
-	new i, count, eModeInfo[ModeData];
-	do {
-		ArrayGetArray(g_aModes, i++, eModeInfo);
-		if(eModeInfo[m_Hide]) count++;
-	} while(i <= last_mode || eModeInfo[m_Hide]);
-	
-	return count;
 }
