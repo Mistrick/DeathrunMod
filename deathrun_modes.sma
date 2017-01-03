@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -446,7 +446,7 @@ public Show_ModesMenu(id)
 }
 public ModesMenu_Handler(id, menu, item)
 {
-	if(item == MENU_EXIT)
+	if(item == MENU_EXIT || g_iCurMode != NONE_MODE || cs_get_user_team(id) != CS_TEAM_T)
 	{
 		menu_destroy(menu);
 		return PLUGIN_HANDLED;
