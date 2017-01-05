@@ -8,13 +8,14 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
-#define IsPlayer(%0) (%0 && %0 <= 32)
+#define IsPlayer(%0) (%0 && %0 <= g_iMaxPlayers)
 
+#define CAN_FLY_THROUGH_THE_WALLS
 //#define STOP_BALL_AFTER_TOUCH
 
 #define SNOWBALL_AMOUNT 200
@@ -31,7 +32,7 @@ new const BALL_MODEL_W[] = "models/w_snowball.mdl";
 new const BALL_MODEL_V[] = "models/v_snowball.mdl";
 new const BALL_MODEL_P[] = "models/p_snowball.mdl";
 
-new g_iModeSnow, g_iCurMode, g_iSprite;
+new g_iModeSnow, g_iCurMode, g_iSprite, g_iMaxPlayers;
 
 public plugin_init()
 {
@@ -41,13 +42,18 @@ public plugin_init()
 	RegisterHam(Ham_Item_Deploy, "weapon_smokegrenade", "Ham_SmokeGranade_Deploy_Post", true);
 	
 	register_forward(FM_SetModel, "FM_SetModel_Post", true);
+	
+	#if defined CAN_FLY_THROUGH_THE_WALLS
 	register_forward(FM_ShouldCollide, "FM_ShouldCollide_Pre", false);
+	#endif // CAN_FLY_THROUGH_THE_WALLS
 	
 	register_touch(BALL_CLASSNAME, "*", "Engine_TouchSnowBall");
 	register_think(BALL_CLASSNAME, "Engine_ThinkSnowBall");
 	
 	register_message(get_user_msgid("TextMsg"), "Message_TextMsg");
 	register_message(get_user_msgid("SendAudio"), "Message_SendAudio");
+	
+	g_iMaxPlayers = get_maxplayers();
 	
 	g_iModeSnow = dr_register_mode
 	(
@@ -148,36 +154,41 @@ public FM_SetModel_Post(ent, const model[])
 }
 public CreateSnowBall(id)
 {
-	new iVectorStart[3]; get_user_origin(id, iVectorStart, 1);
-	new iVectorEnd[3]; get_user_origin(id, iVectorEnd, 3);
-	new Float:fVectorStart[3]; IVecFVec(iVectorStart, fVectorStart);
-	new Float:fVectorEnd[3]; IVecFVec(iVectorEnd, fVectorEnd);
-	new Float:fVelocity[3]; xs_vec_sub(fVectorEnd, fVectorStart, fVelocity);
-	new Float:fNormal[3]; xs_vec_normalize(fVelocity, fNormal);
-	xs_vec_mul_scalar(fNormal, SNOWBALL_VELOCITY, fVelocity);
-	xs_vec_mul_scalar(fNormal, 32.0, fNormal);
-	xs_vec_add(fVectorStart, fNormal, fVectorStart);
+	new Float:vec_start[3]; pev(id, pev_origin, vec_start);
+	new Float:view_ofs[3]; pev(id, pev_view_ofs, view_ofs);
+	xs_vec_add(vec_start, view_ofs, vec_start);
+	
+	new end_of_view[3]; get_user_origin(id, end_of_view, 3);
+	new Float:vec_end[3]; IVecFVec(end_of_view, vec_end);
+	
+	new Float:velocity[3]; xs_vec_sub(vec_end, vec_start, velocity);
+	new Float:normal[3]; xs_vec_normalize(velocity, normal);
+	xs_vec_mul_scalar(normal, SNOWBALL_VELOCITY, velocity);
 	
 	new ent = engfunc(EngFunc_CreateNamedEntity, engfunc(EngFunc_AllocString, "info_target"));
 		
 	set_pev(ent, pev_classname, BALL_CLASSNAME);
 	set_pev(ent, pev_owner, id);
 	set_pev(ent, pev_movetype, MOVETYPE_BOUNCE);
-	set_pev(ent, pev_solid, SOLID_TRIGGER);
+	set_pev(ent, pev_solid, SOLID_NOT);
 	set_pev(ent, pev_nextthink, get_gametime() + SNOWBALL_LIFETIME);
 	
 	engfunc(EngFunc_SetModel, ent, BALL_MODEL_W);
-	engfunc(EngFunc_SetOrigin, ent, fVectorStart);
+	engfunc(EngFunc_SetOrigin, ent, vec_start);
 	engfunc(EngFunc_SetSize, ent, Float:{-3.0, -3.0, -3.0}, Float:{3.0, 3.0, 3.0});
 
-	set_pev(ent, pev_velocity, fVelocity);
+	set_pev(ent, pev_velocity, velocity);
 	
 	set_task(0.1, "Task_SetTrail", ent);
 	//trail_msg(ent, g_iSprite, 5, 8, 55, 55, 255, 150);
 }
 public Task_SetTrail(ent)
 {
-	trail_msg(ent, g_iSprite, 5, 8, 55, 55, 255, 150);
+	if(is_valid_ent(ent))
+	{
+		set_pev(ent, pev_solid, SOLID_TRIGGER);
+		trail_msg(ent, g_iSprite, 5, 8, 55, 55, 255, 150);
+	}
 }
 public Engine_TouchSnowBall(ent, toucher)
 {
@@ -193,10 +204,10 @@ public Engine_TouchSnowBall(ent, toucher)
 	set_pev(ent, pev_movetype, MOVETYPE_FLY);
 	set_pev(ent, pev_velocity, Float:{0.0, 0.0, 0.0});
 	#else
-	new Float:fVelocity[3]; pev(ent, pev_velocity, fVelocity);
-	xs_vec_mul_scalar(fVelocity, 0.7, fVelocity);
-	set_pev(ent, pev_velocity, fVelocity);
-	#endif
+	new Float:velocity[3]; pev(ent, pev_velocity, velocity);
+	xs_vec_mul_scalar(velocity, 0.7, velocity);
+	set_pev(ent, pev_velocity, velocity);
+	#endif // STOP_BALL_AFTER_TOUCH
 	return PLUGIN_CONTINUE;
 }
 SnowBallTakeDamage(snowball, player)
@@ -217,19 +228,21 @@ public Engine_ThinkSnowBall(ent)
 {
 	set_pev(ent, pev_flags, pev(ent, pev_flags) | FL_KILLME);
 }
+
+#if defined CAN_FLY_THROUGH_THE_WALLS
 public FM_ShouldCollide_Pre(ent, toucher)
 {
 	if(g_iCurMode != g_iModeSnow) return FMRES_IGNORED;
 	
 	if(IsPlayer(toucher)) return FMRES_IGNORED;
 	
-	new szToucherClassName[32]; pev(toucher, pev_classname , szToucherClassName, charsmax(szToucherClassName));
-	if(equal(szToucherClassName, BALL_CLASSNAME))
+	new toucher_classname[32]; pev(toucher, pev_classname , toucher_classname, charsmax(toucher_classname));
+	if(equal(toucher_classname, BALL_CLASSNAME))
 	{
-		new szClassName[32]; pev(ent, pev_classname , szClassName, charsmax(szClassName));
-		if(equal(szClassName, "func_wall"))
+		new ent_classname[32]; pev(ent, pev_classname , ent_classname, charsmax(ent_classname));
+		if(equal(ent_classname, "func_wall"))
 		{
-			new Float:FXAmount = Float:pev(ent, pev_renderamt);			
+			new Float:FXAmount = Float:pev(ent, pev_renderamt);
 			if(FXAmount < 200.0)
 			{
 				forward_return(FMV_CELL, 0); 
@@ -239,11 +252,12 @@ public FM_ShouldCollide_Pre(ent, toucher)
 	}
 	return FMRES_IGNORED;
 }
+#endif // CAN_FLY_THROUGH_THE_WALLS
 
 trail_msg(ent, sprite, lifetime, size, r, g, b, alpha)
 {
 	message_begin(MSG_BROADCAST, SVC_TEMPENTITY);
-	write_byte(TE_BEAMFOLLOW);	// TE_BEAMFOLLOW
+	write_byte(TE_BEAMFOLLOW);// TE_BEAMFOLLOW
 	write_short(ent);
 	write_short(sprite);//sprite
 	write_byte(lifetime * 10);//lifetime
