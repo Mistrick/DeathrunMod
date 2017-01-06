@@ -8,7 +8,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -170,7 +170,7 @@ public CreateSnowBall(id)
 	set_pev(ent, pev_classname, BALL_CLASSNAME);
 	set_pev(ent, pev_owner, id);
 	set_pev(ent, pev_movetype, MOVETYPE_BOUNCE);
-	set_pev(ent, pev_solid, SOLID_NOT);
+	set_pev(ent, pev_solid, SOLID_BBOX);
 	set_pev(ent, pev_nextthink, get_gametime() + SNOWBALL_LIFETIME);
 	
 	engfunc(EngFunc_SetModel, ent, BALL_MODEL_W);
@@ -186,7 +186,6 @@ public Task_SetTrail(ent)
 {
 	if(is_valid_ent(ent))
 	{
-		set_pev(ent, pev_solid, SOLID_TRIGGER);
 		trail_msg(ent, g_iSprite, 5, 8, 55, 55, 255, 150);
 	}
 }
