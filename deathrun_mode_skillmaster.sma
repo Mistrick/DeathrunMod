@@ -3,6 +3,7 @@
 #include <engine>
 #include <fakemeta>
 #include <hamsandwich>
+#include <deathrun_core>
 #include <deathrun_modes>
 
 #if AMXX_VERSION_NUM < 183
