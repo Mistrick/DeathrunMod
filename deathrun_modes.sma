@@ -10,7 +10,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "1.0.4"
+#define VERSION "1.0.5"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -34,7 +34,6 @@ new Array:g_aModes, g_iModesNum;
 
 new g_eCurModeInfo[ModeData];
 new g_iCurMode = NONE_MODE;
-new g_iModeButtons;
 new g_iMaxPlayers;
 
 new g_iPage[33], g_iTimer[33], bool:g_bBhop[33];
@@ -64,24 +63,8 @@ public plugin_init()
 	register_menucmd(register_menuid("ModesMenu"), 1023, "ModesMenu_Handler");
 	
 	g_fwSelectedMode = CreateMultiForward("dr_selected_mode", ET_IGNORE, FP_CELL, FP_CELL);
-	
 	g_hDisableItem = menu_makecallback("DisableItem");
-	
 	g_iMaxPlayers = get_maxplayers();
-	
-	g_iModeButtons = dr_register_mode
-	(
-		.Name = "DRM_MODE_BUTTONS",
-		.Mark = "buttons",
-		.RoundDelay = 0,
-		.CT_BlockWeapons = 0,
-		.TT_BlockWeapons = 0,
-		.CT_BlockButtons = 0,
-		.TT_BlockButtons = 0,
-		.Bhop = 1,
-		.Usp = 1,
-		.Hide = 0
-	);
 	
 	g_eCurModeInfo[m_Name] = "DRM_MODE_NONE";
 	g_eCurModeInfo[m_Bhop] = DEFAULT_BHOP;
@@ -356,14 +339,6 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
 	
 	new CsTeams:team = cs_get_user_team(activator);
 	
-	if(g_iCurMode == NONE_MODE && team == CS_TEAM_T)
-	{
-		dr_set_mode(g_iModeButtons, 1, activator);
-		show_menu(activator, 0, "^n");
-		client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_USED_BUTTON", LANG_PLAYER, "DRM_MODE_BUTTONS");
-		return HAM_IGNORED;
-	}
-	
 	if(team == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockButtons] || team == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockButtons])
 	{
 		return HAM_SUPERCEDE;
@@ -408,7 +383,7 @@ public Ham_PlayerSpawn_Post(id)
 }
 public Show_ModesMenu(id)
 {
-	new text[64]; formatex(text, charsmax(text), "%L^n^n%L ", id, "DRM_MENU_SELECT_MODE", id, "DRM_MENU_TIMELEFT", g_iTimer[id]);
+	new text[80]; formatex(text, charsmax(text), "%L^n^n%L ", id, "DRM_MENU_SELECT_MODE", id, "DRM_MENU_TIMELEFT", g_iTimer[id]);
 	new menu = menu_create(text, "ModesMenu_Handler");
 	
 	new mode_info[ModeData];

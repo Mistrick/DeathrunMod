@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -686,13 +686,13 @@ public dr_selected_mode(id, mode)
 {
 	if(g_bDuelStarted && mode != g_iModeDuel)
 	{
+		g_bDuelStarted = false;
 		ResetDuel();
 		ExecuteForward(g_iForwards[DUEL_CANCELED], g_iReturn, CType_ModeChanged);
 	}
 }
 ResetDuel()
 {
-	g_bDuelStarted = false;
 	g_iDuelPlayers[DUELIST_CT] = 0;
 	g_iDuelPlayers[DUELIST_T] = 0;
 	remove_task(TASK_PRESTART_TIMER);

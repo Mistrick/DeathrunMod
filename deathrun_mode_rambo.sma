@@ -9,7 +9,7 @@
 #pragma semicolon 1
 
 #define PLUGIN "Deathrun Mode: Rambo"
-#define VERSION "0.2"
+#define VERSION "1.0.0"
 #define AUTHOR "Mistrick"
 
 #define MIN_DIFF 8.0
