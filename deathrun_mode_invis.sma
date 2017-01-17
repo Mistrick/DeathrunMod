@@ -33,7 +33,6 @@ public plugin_init()
 		.Hide = 0
 	);
 }
-//***** Ham *****//
 public Ham_PlayerSpawn_Post(id)
 {
 	if(is_user_alive(id))
@@ -45,7 +44,6 @@ public Ham_PlayerSpawn_Post(id)
 		}
 	}
 }
-//*****  *****//
 public dr_selected_mode(id, mode)
 {
 	g_iCurMode = mode;
