@@ -13,7 +13,7 @@
 #pragma semicolon 1
 
 #define PLUGIN "Deathrun Mode: Skill Master"
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
@@ -97,6 +97,10 @@ public dr_selected_mode(id, mode)
 	else
 	{
 		DisableHamForward(g_hHamPreThink);
+		for(new Skills:skill; skill < Skills; skill++)
+		{
+			remove_task(_:skill);
+		}
 	}
 }
 public dr_chosen_new_terrorist(id)
