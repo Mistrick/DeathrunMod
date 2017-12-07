@@ -7,7 +7,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Lifes"
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -40,12 +40,33 @@ public plugin_natives()
 	register_native("dr_set_lifes", "native_set_lifes");
 	register_native("dr_get_lifes", "native_get_lifes");
 }
-public native_set_lifes(id, count)
+public native_set_lifes(plugin, params)
 {
-	g_iLifes[id] = count;
+	enum
+	{
+		arg_player = 1,
+		arg_lifes
+	};
+	new id = get_param(arg_player);
+	
+	if(id < 1 || id >= sizeof(g_iLifes))
+	{
+		log_error(AMX_ERR_NATIVE, "[DRL] Set lifes: wrong player index! index %d", id);
+		return 0;
+	}
+	
+	g_iLifes[id] = get_param(arg_lifes);
+	return 1;
 }
-public native_get_lifes(id)
+public native_get_lifes(plugin, params)
 {
+	enum { arg_player = 1 };
+	new id = get_param(arg_player);
+	if(id < 1 || id >= sizeof(g_iLifes))
+	{
+		log_error(AMX_ERR_NATIVE, "[DRL] Get lifes: wrong player index! index %d", id);
+		return 0;
+	}
 	return g_iLifes[id];
 }
 public Comman_Lifes(id)
