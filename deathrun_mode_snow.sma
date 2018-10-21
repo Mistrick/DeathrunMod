@@ -8,7 +8,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Snow"
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -286,7 +286,7 @@ public Engine_ThinkSnowBall(ent)
 		new Float:velocity[3];
 		pev(ent, pev_velocity, velocity);
 
-		entity_set_follow(ent, target, vector_length(velocity));
+		entity_set_follow(ent, target, vector_length(velocity), !random_num(0, 5));
 		set_pev(ent, pev_fuser2, gametime + AUTOTARGET_DELAY);
 	}
 	#endif
@@ -349,12 +349,18 @@ trail_msg(ent, sprite, lifetime, size, r, g, b, alpha)
 	message_end();
 }
 
-stock entity_set_follow(entity, target, Float:speed) {
+stock entity_set_follow(entity, target, Float:speed, bool:head) {
 	if (!is_valid_ent(entity) || !is_valid_ent(target)) return 0;
 
 	new Float:entity_origin[3], Float:target_origin[3];
 	entity_get_vector(entity, EV_VEC_origin, entity_origin);
 	entity_get_vector(target, EV_VEC_origin, target_origin);
+
+	if(head) {
+		new Float:view_ofs[3];
+		entity_get_vector(target, EV_VEC_view_ofs, view_ofs);
+		xs_vec_add(target_origin, view_ofs, target_origin);
+	}
 
 	new Float:diff[3];
 	diff[0] = target_origin[0] - entity_origin[0];
