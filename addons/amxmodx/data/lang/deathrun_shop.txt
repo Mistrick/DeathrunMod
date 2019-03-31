@@ -5,6 +5,7 @@ DRS_MENU_NEXT = Next
 DRS_MENU_EXIT = Exit
 DRS_CANT_BUY = You can't buy this item!
 DRS_NEED_MORE_MONEY = You need $%d more to buy this item!
+DRS_SHOP_WITHOUT_ITEMS = Shop doesn't have any item.
 
 [ru]
 DRS_MENU_TITLE = Deathrun Shop
@@ -13,3 +14,4 @@ DRS_MENU_NEXT = Дальше
 DRS_MENU_EXIT = Выход
 DRS_CANT_BUY = Вы не можете купить этот предмет!
 DRS_NEED_MORE_MONEY = Вам нужно на $%d больше для покупки!
+DRS_SHOP_WITHOUT_ITEMS = В магазине нет предметов.
