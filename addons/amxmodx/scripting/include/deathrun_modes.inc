@@ -113,9 +113,17 @@ native dr_set_user_bhop(id, bool:bhop);
 native bool:dr_get_user_bhop(id);
 
 /**
- * Forward which called when the selection mode.
+ * Forward which called when mode selected.
  * 
  * @param id                    Terrorist index.
  * @param mode                  Mode index.
  */
 forward dr_selected_mode(id, mode);
+
+/**
+ * Forward which called when player changed bhop.
+ * 
+ * @param id                    Player index.
+ * @param value                 Enabled or disabled bhop.
+ */
+forward dr_changed_bhop(id, value);

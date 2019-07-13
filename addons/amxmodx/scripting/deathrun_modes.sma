@@ -7,10 +7,11 @@
 
 #if AMXX_VERSION_NUM < 183
 #include <colorchat>
+#define client_disconnected client_disconnect
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "1.0.5"
+#define VERSION "1.0.6"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -21,8 +22,7 @@
 
 #define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
 
-enum (+=100)
-{
+enum (+=100) {
     TASK_SHOWMENU = 100
 };
 
@@ -38,7 +38,12 @@ new g_iMaxPlayers;
 
 new g_iPage[33], g_iTimer[33], bool:g_bBhop[33];
 
-new g_fwSelectedMode, g_fwReturn;
+enum Forwards {
+    SELECTED_MODE,
+    CHANGED_BHOP
+};
+
+new g_hForwards[Forwards], g_fwReturn;
 
 new g_hDisableItem;
 
@@ -62,7 +67,9 @@ public plugin_init()
     
     register_menucmd(register_menuid("ModesMenu"), 1023, "ModesMenu_Handler");
     
-    g_fwSelectedMode = CreateMultiForward("dr_selected_mode", ET_IGNORE, FP_CELL, FP_CELL);
+    g_hForwards[SELECTED_MODE] = CreateMultiForward("dr_selected_mode", ET_IGNORE, FP_CELL, FP_CELL);
+    g_hForwards[CHANGED_BHOP] = CreateMultiForward("dr_changed_bhop", ET_IGNORE, FP_CELL, FP_CELL);
+
     g_hDisableItem = menu_makecallback("DisableItem");
     g_iMaxPlayers = get_maxplayers();
     
@@ -146,7 +153,7 @@ public native_set_mode(plugin, params)
     }
     
     if(get_param(arg_forward)) {
-        ExecuteForward(g_fwSelectedMode, g_fwReturn, get_param(arg_player_id), mode_index + 1);
+        ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, get_param(arg_player_id), mode_index + 1);
     }
     
     return 1;
@@ -225,6 +232,8 @@ public native_set_user_bhop(plugin, params)
     }
     
     g_bBhop[player] = get_param(arg_bhop) ? true : false;
+
+    ExecuteForward(g_hForwards[CHANGED_BHOP], g_fwReturn, player, g_bBhop[player]);
     
     return 1;
 }
@@ -245,7 +254,7 @@ public client_putinserver(id)
 {
     g_bBhop[id] = true;
 }
-public client_disconnect(id)
+public client_disconnected(id)
 {
     remove_task(id + TASK_SHOWMENU);
 }
@@ -255,6 +264,8 @@ public Command_Bhop(id)
     
     g_bBhop[id] = !g_bBhop[id];
     client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRM_BHOP_MSG", id, g_bBhop[id] ? "DRM_ENABLED" : "DRM_DISABLED");
+
+    ExecuteForward(g_hForwards[CHANGED_BHOP], g_fwReturn, id, g_bBhop[id]);
     
     return PLUGIN_CONTINUE;
 }
@@ -270,7 +281,7 @@ public Event_NewRound()
     g_eCurModeInfo[m_CT_BlockButtons] = 0;
     g_eCurModeInfo[m_TT_BlockButtons] = 0;
     
-    ExecuteForward(g_fwSelectedMode, g_fwReturn, 0, g_iCurMode + 1);
+    ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, 0, g_iCurMode + 1);
     
     new mode_info[ModeData];
     for(new i = 0; i < g_iModesNum; i++) {
@@ -422,7 +433,7 @@ public ModesMenu_Handler(id, menu, item)
     CheckUsp();
     
     remove_task(id + TASK_SHOWMENU);
-    ExecuteForward(g_fwSelectedMode, g_fwReturn, id, mode + 1);
+    ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, id, mode + 1);
     client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
     
     menu_destroy(menu);
@@ -466,7 +477,7 @@ public Task_MenuTimer(id)
         
         CheckUsp();
         
-        ExecuteForward(g_fwSelectedMode, g_fwReturn, id, mode + 1);
+        ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, id, mode + 1);
         
         client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
     } else {
