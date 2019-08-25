@@ -11,7 +11,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "1.0.6"
+#define VERSION "1.0.7"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -45,7 +45,7 @@ enum Forwards {
 
 new g_hForwards[Forwards], g_fwReturn;
 
-new g_hDisableItem;
+new g_hMenuDisableItem;
 
 public plugin_init()
 {
@@ -55,22 +55,22 @@ public plugin_init()
     
     register_clcmd("say /bhop", "Command_Bhop");
     
-    RegisterHam(Ham_Spawn, "player", "Ham_PlayerSpawn_Post", 1);
-    RegisterHam(Ham_Touch, "weaponbox", "Ham_TouchItems_Pre", 0);
-    RegisterHam(Ham_Touch, "armoury_entity", "Ham_TouchItems_Pre", 0);
-    RegisterHam(Ham_Touch, "weapon_shield", "Ham_TouchItems_Pre", 0);
-    RegisterHam(Ham_Use, "func_button", "Ham_UseButtons_Pre", 0);
-    RegisterHam(Ham_Player_Jump, "player", "Ham_PlayerJump_Pre", 0);
+    RegisterHam(Ham_Spawn, "player", "ham_player_spawn_post", 1);
+    RegisterHam(Ham_Touch, "weaponbox", "ham_touch_items_pre", 0);
+    RegisterHam(Ham_Touch, "armoury_entity", "ham_touch_items_pre", 0);
+    RegisterHam(Ham_Touch, "weapon_shield", "ham_touch_items_pre", 0);
+    RegisterHam(Ham_Use, "func_button", "ham_use_buttons_pre", 0);
+    RegisterHam(Ham_Player_Jump, "player", "ham_player_jump_pre", 0);
     
-    register_event("HLTV", "Event_NewRound", "a", "1=0", "2=0");
-    register_event("TextMsg", "Event_Restart", "a", "2=#Game_Commencing", "2=#Game_will_restart_in");
+    register_event("HLTV", "event__new_round", "a", "1=0", "2=0");
+    register_event("TextMsg", "event__restart", "a", "2=#Game_Commencing", "2=#Game_will_restart_in");
     
-    register_menucmd(register_menuid("ModesMenu"), 1023, "ModesMenu_Handler");
+    register_menucmd(register_menuid("ModesMenu"), 1023, "modes_menu__handler");
     
     g_hForwards[SELECTED_MODE] = CreateMultiForward("dr_selected_mode", ET_IGNORE, FP_CELL, FP_CELL);
     g_hForwards[CHANGED_BHOP] = CreateMultiForward("dr_changed_bhop", ET_IGNORE, FP_CELL, FP_CELL);
 
-    g_hDisableItem = menu_makecallback("DisableItem");
+    g_hMenuDisableItem = menu_makecallback("menu_disable_item");
     g_iMaxPlayers = get_maxplayers();
     
     g_eCurModeInfo[m_Name] = "DRM_MODE_NONE";
@@ -177,7 +177,8 @@ public native_get_mode_by_mark(plugin, params)
 {
     enum { arg_mark = 1 };
     
-    new mark[16]; get_string(arg_mark, mark, charsmax(mark));
+    new mark[16];
+    get_string(arg_mark, mark, charsmax(mark));
     
     for(new mode_index, mode_info[ModeData]; mode_index < g_iModesNum; mode_index++) {
         ArrayGetArray(g_aModes, mode_index, mode_info);
@@ -270,7 +271,7 @@ public Command_Bhop(id)
     return PLUGIN_CONTINUE;
 }
 //***** Events *****//
-public Event_NewRound()
+public event__new_round()
 {
     g_iCurMode = NONE_MODE;
     g_eCurModeInfo[m_Name] = "DRM_MODE_NONE";
@@ -280,9 +281,7 @@ public Event_NewRound()
     g_eCurModeInfo[m_TT_BlockWeapon] = 0;
     g_eCurModeInfo[m_CT_BlockButtons] = 0;
     g_eCurModeInfo[m_TT_BlockButtons] = 0;
-    
-    ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, 0, g_iCurMode + 1);
-    
+
     new mode_info[ModeData];
     for(new i = 0; i < g_iModesNum; i++) {
         ArrayGetArray(g_aModes, i, mode_info);
@@ -291,11 +290,14 @@ public Event_NewRound()
             ArraySetArray(g_aModes, i, mode_info);
         }
     }
+
+    ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, 0, g_iCurMode + 1);
+
     for(new id = 1; id <= g_iMaxPlayers; id++) {
         remove_task(id + TASK_SHOWMENU);
     }
 }
-public Event_Restart()
+public event__restart()
 {
     new mode_info[ModeData];
     for(new i = 0; i < g_iModesNum; i++) {
@@ -305,10 +307,12 @@ public Event_Restart()
     }
 }
 //***** Ham *****//
-public Ham_PlayerJump_Pre(id)
-{	
-    if(!g_eCurModeInfo[m_Bhop] || !g_bBhop[id]) return HAM_IGNORED;
-    
+public ham_player_jump_pre(id)
+{
+    if(!g_eCurModeInfo[m_Bhop] || !g_bBhop[id]) {
+        return HAM_IGNORED;
+    }
+
     new flags = pev(id, pev_flags);
     
     if(flags & FL_WATERJUMP || pev(id, pev_waterlevel) >= 2 || !(flags & FL_ONGROUND)) {
@@ -327,9 +331,11 @@ public Ham_PlayerJump_Pre(id)
     
     return HAM_IGNORED;
 }
-public Ham_UseButtons_Pre(ent, caller, activator, use_type)
+public ham_use_buttons_pre(ent, caller, activator, use_type)
 {
-    if(!IsPlayer(activator)) return HAM_IGNORED;
+    if(!IsPlayer(activator)) {
+        return HAM_IGNORED;
+    }
     
     new CsTeams:team = cs_get_user_team(activator);
     
@@ -339,9 +345,11 @@ public Ham_UseButtons_Pre(ent, caller, activator, use_type)
     
     return HAM_IGNORED;
 }
-public Ham_TouchItems_Pre(ent, id)
+public ham_touch_items_pre(ent, id)
 {
-    if(!IsPlayer(id) || g_iCurMode == NONE_MODE) return HAM_IGNORED;
+    if(!IsPlayer(id) || g_iCurMode == NONE_MODE) {
+        return HAM_IGNORED;
+    }
     
     new CsTeams:team = cs_get_user_team(id);
     
@@ -351,9 +359,11 @@ public Ham_TouchItems_Pre(ent, id)
     
     return HAM_IGNORED;
 }
-public Ham_PlayerSpawn_Post(id)
+public ham_player_spawn_post(id)
 {
-    if(!is_user_alive(id)) return HAM_IGNORED;
+    if(!is_user_alive(id)) {
+        return HAM_IGNORED;
+    }
     
     set_user_rendering(id);
     
@@ -364,26 +374,29 @@ public Ham_PlayerSpawn_Post(id)
         cs_set_user_bpammo(id, CSW_USP, 100);
     }
     
-    if(g_iCurMode != NONE_MODE  || team != CS_TEAM_T) {
+    if(g_iCurMode != NONE_MODE || team != CS_TEAM_T) {
         return HAM_IGNORED;
     }
 
     g_iTimer[id] = TIMER + 1;
     g_iPage[id] = 0;
-    Task_MenuTimer(id + TASK_SHOWMENU);
+    task__menu_timer(id + TASK_SHOWMENU);
     
     return HAM_IGNORED;
 }
-public Show_ModesMenu(id)
+public show__modes_menu(id)
 {
-    new text[80]; formatex(text, charsmax(text), "%L^n^n%L ", id, "DRM_MENU_SELECT_MODE", id, "DRM_MENU_TIMELEFT", g_iTimer[id]);
-    new menu = menu_create(text, "ModesMenu_Handler");
+    new text[80];
+    formatex(text, charsmax(text), "%L^n^n%L ", id, "DRM_MENU_SELECT_MODE", id, "DRM_MENU_TIMELEFT", g_iTimer[id]);
+    new menu = menu_create(text, "modes_menu__handler");
     
     new mode_info[ModeData];
     for(new i, item[2], len; i < g_iModesNum; i++) {
         ArrayGetArray(g_aModes, i, mode_info);
         
-        if(mode_info[m_Hide]) continue;
+        if(mode_info[m_Hide]) {
+            continue;
+        }
         
         len = formatex(text, charsmax(text), "%L", id, mode_info[m_Name]);
         if(mode_info[m_CurDelay] > 0) {
@@ -392,7 +405,7 @@ public Show_ModesMenu(id)
         
         item[0] = i;
         
-        menu_additem(menu, text, item, 0, mode_info[m_CurDelay] ? g_hDisableItem : -1);
+        menu_additem(menu, text, item, 0, mode_info[m_CurDelay] ? g_hMenuDisableItem : -1);
     }
     
     formatex(text, charsmax(text), "%L", id, "DRM_MENU_BACK");
@@ -410,7 +423,7 @@ public Show_ModesMenu(id)
     
     return PLUGIN_HANDLED;
 }
-public ModesMenu_Handler(id, menu, item)
+public modes_menu__handler(id, menu, item)
 {
     if(item == MENU_EXIT || g_iCurMode != NONE_MODE || cs_get_user_team(id) != CS_TEAM_T) {
         menu_destroy(menu);
@@ -430,7 +443,7 @@ public ModesMenu_Handler(id, menu, item)
         ArraySetArray(g_aModes, mode, g_eCurModeInfo);
     }
     
-    CheckUsp();
+    check_usp();
     
     remove_task(id + TASK_SHOWMENU);
     ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, id, mode + 1);
@@ -439,11 +452,11 @@ public ModesMenu_Handler(id, menu, item)
     menu_destroy(menu);
     return PLUGIN_HANDLED;
 }
-public DisableItem(id, menu, item)
+public menu_disable_item(id, menu, item)
 {
     return ITEM_DISABLED;
 }
-public Task_MenuTimer(id)
+public task__menu_timer(id)
 {
     id -= TASK_SHOWMENU;
     
@@ -475,21 +488,22 @@ public Task_MenuTimer(id)
             ArraySetArray(g_aModes, mode, g_eCurModeInfo);
         }
         
-        CheckUsp();
+        check_usp();
         
         ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, id, mode + 1);
         
         client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
     } else {
-        Show_ModesMenu(id);
-        set_task(1.0, "Task_MenuTimer", id + TASK_SHOWMENU);
+        show__modes_menu(id);
+        set_task(1.0, "task__menu_timer", id + TASK_SHOWMENU);
     }
 }
-CheckUsp()
+check_usp()
 {
     #if DEFAULT_USP < 1
     if(g_eCurModeInfo[m_Usp]) {
-        new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
+        new player, players[32], pnum;
+        get_players(players, pnum, "ae", "CT");
         for(new i = 0; i < pnum; i++) {
             player = players[i];
             give_item(player, "weapon_usp");
@@ -498,7 +512,8 @@ CheckUsp()
     }
     #else
     if(!g_eCurModeInfo[m_Usp]) {
-        new player, players[32], pnum; get_players(players, pnum, "ae", "CT");
+        new player, players[32], pnum;
+        get_players(players, pnum, "ae", "CT");
         for(new i = 0; i < pnum; i++) {
             player = players[i];
             fm_strip_user_gun(player, CSW_USP);
