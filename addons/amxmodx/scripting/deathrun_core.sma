@@ -8,25 +8,31 @@
 
 #if AMXX_VERSION_NUM < 183
 #include <colorchat>
+#define client_disconnected client_disconnect
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "1.1.4"
+#define VERSION "1.1.5"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
 #define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
 
-#define WARMUP_TIME 5.0
-#define HEALER_MAX_HEALTH 150.0
+#define get_num(%0) get_pcvar_num(g_pCvars[%0])
+#define set_num(%0,%1) set_pcvar_num(g_pCvars[%0],%1)
+#define get_float(%0) get_pcvar_float(g_pCvars[%0])
+#define set_float(%0,%1) set_pcvar_float(g_pCvars[%0],%1)
 
 enum (+=100) {
     TASK_RESPAWN = 100
 };
+
 enum _:Cvars {
     BLOCK_KILL,
     BLOCK_FALLDMG,
+    LIMIT_HEALTH,
+    WARMUP_TIME,
     AUTOTEAMBALANCE,
     LIMITTEAMS,
     RESTART
@@ -38,7 +44,7 @@ enum Forwards {
 
 new const PREFIX[] = "^4[DRM]";
 
-new g_eCvars[Cvars], g_iForwards[Forwards], g_iReturn, g_bWarmUp = true;
+new g_pCvars[Cvars], g_iForwards[Forwards], g_iReturn, g_bWarmUp = true;
 new g_iForwardSpawn, HamHook:g_iHamPreThink, Trie:g_tRemoveEntities;
 new g_msgShowMenu, g_msgVGUIMenu, g_msgAmmoPickup, g_msgWeapPickup;
 new g_iOldAmmoPickupBlock, g_iOldWeapPickupBlock, g_iTerrorist, g_iNextTerrorist, g_iMaxPlayers;
@@ -49,12 +55,14 @@ public plugin_init()
     
     register_cvar("deathrun_core_version", VERSION, FCVAR_SERVER | FCVAR_SPONLY);
     
-    g_eCvars[BLOCK_KILL] = register_cvar("deathrun_block_kill", "1");
-    g_eCvars[BLOCK_FALLDMG] = register_cvar("deathrun_block_falldmg", "1");
+    g_pCvars[BLOCK_KILL] = register_cvar("deathrun_block_kill", "1");
+    g_pCvars[BLOCK_FALLDMG] = register_cvar("deathrun_block_falldmg", "1");
+    g_pCvars[LIMIT_HEALTH] = register_cvar("deathrun_limit_health", "150"); // 0 - disable
+    g_pCvars[WARMUP_TIME] = register_cvar("deathrun_warmup_time", "15.0");
     
-    g_eCvars[AUTOTEAMBALANCE] = get_cvar_pointer("mp_autoteambalance");
-    g_eCvars[LIMITTEAMS]  = get_cvar_pointer("mp_limitteams");
-    g_eCvars[RESTART] = get_cvar_pointer("sv_restart");
+    g_pCvars[AUTOTEAMBALANCE] = get_cvar_pointer("mp_autoteambalance");
+    g_pCvars[LIMITTEAMS]  = get_cvar_pointer("mp_limitteams");
+    g_pCvars[RESTART] = get_cvar_pointer("sv_restart");
     
     register_clcmd("chooseteam", "Command_ChooseTeam");
     
@@ -84,7 +92,7 @@ public plugin_init()
     unregister_forward(FM_Spawn, g_iForwardSpawn, 0);
     TrieDestroy(g_tRemoveEntities);
     
-    set_task(WARMUP_TIME, "Task_WarmupOff");
+    set_task(get_float(WARMUP_TIME), "Task_WarmupOff");
     
     Block_Commands();
     CheckMap();
@@ -94,7 +102,7 @@ public plugin_init()
 public Task_WarmupOff()
 {
     g_bWarmUp = false;
-    set_pcvar_num(g_eCvars[RESTART], 1);
+    set_num(RESTART, 1);
 }
 CheckMap()
 {
@@ -172,17 +180,18 @@ public client_putinserver(id)
         block_user_spawn(id);
     }
 }
-public client_disconnect(id)
+public client_disconnected(id)
 {
     if(id != g_iTerrorist) {
         return;
     }
     
-    new iPlayers[32], iNum;	iNum = _get_players(iPlayers, true);
+    new players[32], pnum;
+    pnum = _get_players(players, true);
     
-    if(iNum >= 2) {
+    if(pnum >= 2) {
         new Float:fOrigin[3]; pev(id, pev_origin, fOrigin);
-        g_iTerrorist = iPlayers[random(iNum)];
+        g_iTerrorist = players[random(pnum)];
         cs_set_user_team(g_iTerrorist, CS_TEAM_T);
         ExecuteHamB(Ham_CS_RoundRespawn, g_iTerrorist);
         engfunc(EngFunc_SetOrigin, g_iTerrorist, fOrigin);
@@ -193,7 +202,7 @@ public client_disconnect(id)
         new leaver[32]; get_user_name(id, leaver, charsmax(leaver));
         client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRC_TERRORIST_LEFT", leaver, name);
     } else {
-        set_pcvar_num(g_eCvars[RESTART], 5);
+        set_num(RESTART, 5);
     }
 }
 //******** Commands ********//
@@ -217,8 +226,8 @@ public Command_BlockCmds(id)
 //******** Events ********//
 public Event_NewRound()
 {
-    set_pcvar_num(g_eCvars[AUTOTEAMBALANCE], 0);
-    set_pcvar_num(g_eCvars[LIMITTEAMS], 0);
+    set_num(AUTOTEAMBALANCE, 0);
+    set_num(LIMITTEAMS, 0);
     TeamBalance();	
 }
 TeamBalance()
@@ -227,9 +236,10 @@ TeamBalance()
         return;
     }
 
-    new iPlayers[32], iNum, iPlayer; iNum = _get_players(iPlayers, false);
+    new players[32], pnum, player;
+    pnum = _get_players(players, false);
     
-    if(iNum < 1 || iNum == 1 && !is_user_connected(g_iTerrorist)) {
+    if(pnum < 1 || pnum == 1 && !is_user_connected(g_iTerrorist)) {
         return;
     }
 
@@ -238,20 +248,21 @@ TeamBalance()
     }
 
     if(!is_user_connected(g_iNextTerrorist)) {
-        g_iTerrorist = iPlayers[random(iNum)];
+        g_iTerrorist = players[random(pnum)];
     } else {
         g_iTerrorist = g_iNextTerrorist;
         g_iNextTerrorist = 0;
     }
     
     cs_set_user_team(g_iTerrorist, CS_TEAM_T);
-    for(new i = 0; i < iNum; i++) {
-        iPlayer = iPlayers[i];
-        if(iPlayer != g_iTerrorist) {
-            cs_set_user_team(iPlayer, CS_TEAM_CT);
+    for(new i = 0; i < pnum; i++) {
+        player = players[i];
+        if(player != g_iTerrorist) {
+            cs_set_user_team(player, CS_TEAM_CT);
         }
     }
-    new name[32]; get_user_name(g_iTerrorist, name, charsmax(name));
+    new name[32];
+    get_user_name(g_iTerrorist, name, charsmax(name));
     client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRC_BECAME_TERRORIST", name);
 }
 public Event_RoundStart()
@@ -261,7 +272,8 @@ public Event_RoundStart()
 TerroristCheck()
 {
     if(!is_user_connected(g_iTerrorist)) {
-        new players[32], pnum; get_players(players, pnum, "ae", "TERRORIST");
+        new players[32], pnum;
+        get_players(players, pnum, "ae", "TERRORIST");
         g_iTerrorist = pnum ? players[0] : 0;
     }
     ExecuteForward(g_iForwards[NEW_TERRORIST], g_iReturn, g_iTerrorist);
@@ -310,7 +322,7 @@ public Ham_PlayerSpawn_Post(id)
 
     block_user_radio(id);
     
-    strip_user_weapons(id);//bug with m_bHasPrimary
+    strip_user_weapons(id); //bug with m_bHasPrimary
     give_item(id, "weapon_knife");
     
     return HAM_IGNORED;
@@ -361,12 +373,15 @@ Float:get_player_eyes_origin(id)
 public Ham_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damage_bits)
 {
     // fix health abuse
-    if(damage < 0.0) {
-        new Float:health; pev(victim, pev_health, health);
-        if(health - damage > HEALER_MAX_HEALTH)
-        return HAM_SUPERCEDE;
+    new Float:max_health = get_float(LIMIT_HEALTH);
+    if(damage < 0.0 && max_health) {
+        new Float:health;
+        pev(victim, pev_health, health);
+        if(health - damage > max_health) {
+            return HAM_SUPERCEDE;
+        }
     }
-    if(damage_bits & DMG_FALL && get_pcvar_num(g_eCvars[BLOCK_FALLDMG]) && cs_get_user_team(victim) == CS_TEAM_T) {
+    if(damage_bits & DMG_FALL && get_num(BLOCK_FALLDMG) && cs_get_user_team(victim) == CS_TEAM_T) {
         return HAM_SUPERCEDE;
     }
     return HAM_IGNORED;
@@ -374,10 +389,13 @@ public Ham_TakeDamage_Pre(victim, inflictor, attacker, Float:damage, damage_bits
 public Ham_TraceAttack_Pre(victim, idattacker, Float:damage, Float:direction[3], trace_result, damagebits)
 {
     // fix health abuse
-    if(damage < 0.0) {
-        new Float:health; pev(victim, pev_health, health);
-        if(health - damage > HEALER_MAX_HEALTH)
+    new Float:max_health = get_float(LIMIT_HEALTH);
+    if(damage < 0.0 && max_health) {
+        new Float:health;
+        pev(victim, pev_health, health);
+        if(health - damage > max_health) {
             return HAM_SUPERCEDE;
+        }
     }
     return HAM_IGNORED;
 }
@@ -396,11 +414,17 @@ public Ham_PlayerPreThink_Post(id)
 }
 public FM_ClientKill_Pre(id)
 {
-    return (get_pcvar_num(g_eCvars[BLOCK_KILL]) || is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_T) ? FMRES_SUPERCEDE : FMRES_IGNORED;
+    if(get_num(BLOCK_KILL) || is_user_alive(id) && cs_get_user_team(id) == CS_TEAM_T) {
+        return FMRES_SUPERCEDE;
+    }
+    return FMRES_IGNORED;
 }
 public FM_GetGameDescription_Pre()
 {
-    static game_name[32]; if(!game_name[0]) formatex(game_name, charsmax(game_name), "Deathrun v%s", VERSION);
+    static game_name[32];
+    if(!game_name[0]) {
+        formatex(game_name, charsmax(game_name), "Deathrun v%s", VERSION);
+    }
     forward_return(FMV_STRING, game_name);
     return FMRES_SUPERCEDE;
 }
@@ -414,16 +438,21 @@ stock _get_players(players[32], bool:alive = false)
 {
     new CsTeams:team, count;
     for(new i = 1; i <= g_iMaxPlayers; i++) {
-        if(i == g_iTerrorist || !is_user_connected(i) || alive && !is_user_alive(i)) continue;
+        if(i == g_iTerrorist || !is_user_connected(i) || alive && !is_user_alive(i)) {
+            continue;
+        }
         team = cs_get_user_team(i);
-        if(team == CS_TEAM_UNASSIGNED || team == CS_TEAM_SPECTATOR) continue;
+        if(team == CS_TEAM_UNASSIGNED || team == CS_TEAM_SPECTATOR) {
+            continue;
+        }
         players[count++] = i;
     }
     return count;
 }
 stock _get_alive_players()
 {
-    new players[32], pnum; get_players(players, pnum, "a");
+    new players[32], pnum;
+    get_players(players, pnum, "a");
     return pnum;
 }
 stock block_user_radio(id)
@@ -441,22 +470,31 @@ stock bool:allow_press_button(ent, Float:start[3], Float:end[3], bool:ignore_pla
     engfunc(EngFunc_TraceLine, start, end, (ignore_players ? IGNORE_MONSTERS : DONT_IGNORE_MONSTERS), ent, 0);
     new Float:fraction; get_tr2(0, TR_flFraction, fraction);
     
-    if(fraction == 1.0) return true;
+    if(fraction == 1.0) {
+        return true;
+    }
     
     new hit_ent = get_tr2(0, TR_pHit);
     
-    if(!pev_valid(hit_ent)) return false;
+    if(!pev_valid(hit_ent)) {
+        return false;
+    }
     
-    new Float:fAbsMin[3]; pev(hit_ent, pev_absmin, fAbsMin);
-    new Float:fAbsMax[3]; pev(hit_ent, pev_absmax, fAbsMax);
-    new Float:fVolume[3]; xs_vec_sub(fAbsMax, fAbsMin, fVolume);
+    new Float:absmin[3], Float:absmax[3], Float:volume[3]; 
+    pev(hit_ent, pev_absmin, absmin);
+    pev(hit_ent, pev_absmax, absmax);
+    xs_vec_sub(absmax, absmin, volume);
     
-    if(fVolume[0] < 48.0 && fVolume[1] < 48.0 && fVolume[2] < 48.0) return true;
+    if(volume[0] < 48.0 && volume[1] < 48.0 && volume[2] < 48.0) {
+        return true;
+    }
     
     return false;
 }
 stock bool:UTIL_IsTargetActivate(const ent)
 {
-    new target_name[32]; pev(ent, pev_targetname, target_name, charsmax(target_name));
-    return (target_name[0]) ? false : true;
+    new target_name[32];
+    pev(ent, pev_targetname, target_name, charsmax(target_name));
+    new temp = find_ent_by_tname(-1, target_name);
+    return !pev_valid(temp);
 }
