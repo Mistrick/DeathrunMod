@@ -12,38 +12,42 @@
     #pragma library deathrun_modes
 #endif
 
-enum _:ModeData
-{
+enum _:ModeData {
     m_Name[32],
     m_Mark[16],
     m_RoundDelay,
     m_CurDelay,
-    m_CT_BlockWeapon,
-    m_TT_BlockWeapon,
-    m_CT_BlockButtons,
-    m_TT_BlockButtons,
-    m_Bhop,
-    m_Usp,
-    m_Hide
+    ModeFlags:m_Flags
+};
+
+enum ModeFlags (<<=1) {
+    /* Block ct pick up weapons */
+    DRM_BLOCK_CT_WEAPON = 1,
+    /* Block t pick up weapons */
+    DRM_BLOCK_T_WEAPON,
+    /* Block ct use buttons */
+    DRM_BLOCK_CT_BUTTONS,
+    /* Block t use buttons */
+    DRM_BLOCK_T_BUTTONS,
+    /* Allow autobhop */
+    DRM_ALLOW_BHOP,
+    /* Give usp to ct at round start */
+    DRM_GIVE_USP,
+    /* Hide mode in menu */
+    DRM_HIDE
 };
 
 /**
  * Mode registration.
  *
- * @param Name                  Mode name, use ML key.
- * @param Mark                  Mode mark, use this to get mode index in other plugins.
- * @param RoundDelay            Mode blocking in rounds.
- * @param CT_BlockWeapons       Allow CT pick up weapons.
- * @param TT_BlockWeapons       Allow TT pick up weapons.
- * @param CT_BlockButtons       Allow CT use buttons.
- * @param TT_BlockButtons       Allow TT use buttons.
- * @param Bhop                  Enable autobhop.
- * @param Usp                   Enable start with USP for CT.
- * @param Hide                  Allow hide mode in menu.
+ * @param name                  Mode name, use ML key.
+ * @param mark                  Mode mark, use this to get mode index in other plugins.
+ * @param round_delay           Mode blocking in rounds.
+ * @param flags                 Mode flags, see ModeFlags.
  *
  * @return                      Mode index.
  */
-native dr_register_mode(Name[32], Mark[16], RoundDelay, CT_BlockWeapons, TT_BlockWeapons, CT_BlockButtons, TT_BlockButtons, Bhop, Usp, Hide = 0);
+native dr_register_mode(name[32], mark[16], round_delay, ModeFlags:flags);
 
 /**
  * Get current mode.

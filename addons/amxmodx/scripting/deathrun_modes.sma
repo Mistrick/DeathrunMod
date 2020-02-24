@@ -11,16 +11,18 @@
 #endif
 
 #define PLUGIN "Deathrun: Modes"
-#define VERSION "1.0.7"
+#define VERSION "1.1.0"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
+// TODO: move to cvars
 #define DEFAULT_BHOP 1
 #define DEFAULT_USP 1
 #define TIMER 15
 
 #define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
+#define CHECK_FLAGS(%1) (g_eCurModeInfo[m_Flags] & %1)
 
 enum (+=100) {
     TASK_SHOWMENU = 100
@@ -74,8 +76,7 @@ public plugin_init()
     g_iMaxPlayers = get_maxplayers();
     
     g_eCurModeInfo[m_Name] = "DRM_MODE_NONE";
-    g_eCurModeInfo[m_Bhop] = DEFAULT_BHOP;
-    g_eCurModeInfo[m_Usp] = DEFAULT_USP;
+    g_eCurModeInfo[m_Flags] = (ModeFlags:DEFAULT_BHOP * DRM_ALLOW_BHOP) | (ModeFlags:DEFAULT_USP * DRM_GIVE_USP);
 }
 public plugin_cfg()
 {
@@ -102,13 +103,7 @@ public native_register_mode(plugin, params)
         arg_name = 1,
         arg_mark,
         arg_round_delay,
-        arg_ct_block_weapons,
-        arg_tt_block_weapons,
-        arg_ct_block_buttons,
-        arg_tt_block_buttons,
-        arg_bhop,
-        arg_usp,
-        arg_hide
+        arg_flags
     };
     
     new mode_info[ModeData];
@@ -116,13 +111,7 @@ public native_register_mode(plugin, params)
     get_string(arg_name, mode_info[m_Name], charsmax(mode_info[m_Name]));
     get_string(arg_mark, mode_info[m_Mark], charsmax(mode_info[m_Mark]));
     mode_info[m_RoundDelay] = get_param(arg_round_delay);
-    mode_info[m_CT_BlockWeapon] = get_param(arg_ct_block_weapons);
-    mode_info[m_TT_BlockWeapon] = get_param(arg_tt_block_weapons);
-    mode_info[m_CT_BlockButtons] = get_param(arg_ct_block_buttons);
-    mode_info[m_TT_BlockButtons] = get_param(arg_tt_block_buttons);
-    mode_info[m_Bhop] = get_param(arg_bhop);
-    mode_info[m_Usp] = get_param(arg_usp);
-    mode_info[m_Hide] = get_param(arg_hide);
+    mode_info[m_Flags] = ModeFlags:get_param(arg_flags);
     
     ArrayPushArray(g_aModes, mode_info);
     g_iModesNum++;
@@ -212,11 +201,15 @@ public native_set_mode_bhop(plugin, params)
 {
     enum { arg_mode_bhop = 1 };
     
-    g_eCurModeInfo[m_Bhop] = get_param(arg_mode_bhop) ? 1 : 0;
+    if(get_param(arg_mode_bhop)) {
+        g_eCurModeInfo[m_Flags] |= DRM_ALLOW_BHOP;
+    } else {
+        g_eCurModeInfo[m_Flags] &= ~DRM_ALLOW_BHOP;
+    }
 }
 public native_get_mode_bhop(plugin, params)
 {
-    return g_eCurModeInfo[m_Bhop];
+    return _:CHECK_FLAGS(DRM_ALLOW_BHOP);
 }
 public native_set_user_bhop(plugin, params)
 {
@@ -249,7 +242,7 @@ public bool:native_get_user_bhop(id)
         return false;
     }
     
-    return g_eCurModeInfo[m_Bhop] && g_bBhop[player];
+    return CHECK_FLAGS(DRM_ALLOW_BHOP) && g_bBhop[player];
 }
 public client_putinserver(id)
 {
@@ -261,7 +254,7 @@ public client_disconnected(id)
 }
 public Command_Bhop(id)
 {
-    if(!g_eCurModeInfo[m_Bhop]) return PLUGIN_CONTINUE;
+    if(!CHECK_FLAGS(DRM_ALLOW_BHOP)) return PLUGIN_CONTINUE;
     
     g_bBhop[id] = !g_bBhop[id];
     client_print_color(id, print_team_default, "%s^1 %L", PREFIX, id, "DRM_BHOP_MSG", id, g_bBhop[id] ? "DRM_ENABLED" : "DRM_DISABLED");
@@ -275,12 +268,7 @@ public event__new_round()
 {
     g_iCurMode = NONE_MODE;
     g_eCurModeInfo[m_Name] = "DRM_MODE_NONE";
-    g_eCurModeInfo[m_Bhop] = DEFAULT_BHOP;
-    g_eCurModeInfo[m_Usp] = DEFAULT_USP;
-    g_eCurModeInfo[m_CT_BlockWeapon] = 0;
-    g_eCurModeInfo[m_TT_BlockWeapon] = 0;
-    g_eCurModeInfo[m_CT_BlockButtons] = 0;
-    g_eCurModeInfo[m_TT_BlockButtons] = 0;
+    g_eCurModeInfo[m_Flags] = (ModeFlags:DEFAULT_BHOP * DRM_ALLOW_BHOP) | (ModeFlags:DEFAULT_USP * DRM_GIVE_USP);
 
     new mode_info[ModeData];
     for(new i = 0; i < g_iModesNum; i++) {
@@ -309,7 +297,7 @@ public event__restart()
 //***** Ham *****//
 public ham_player_jump_pre(id)
 {
-    if(!g_eCurModeInfo[m_Bhop] || !g_bBhop[id]) {
+    if(!CHECK_FLAGS(DRM_ALLOW_BHOP) || !g_bBhop[id]) {
         return HAM_IGNORED;
     }
 
@@ -339,7 +327,8 @@ public ham_use_buttons_pre(ent, caller, activator, use_type)
     
     new CsTeams:team = cs_get_user_team(activator);
     
-    if(team == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockButtons] || team == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockButtons]) {
+    if(team == CS_TEAM_T && CHECK_FLAGS(DRM_BLOCK_T_BUTTONS)
+        || team == CS_TEAM_CT && CHECK_FLAGS(DRM_BLOCK_CT_BUTTONS)) {
         return HAM_SUPERCEDE;
     }
     
@@ -353,7 +342,8 @@ public ham_touch_items_pre(ent, id)
     
     new CsTeams:team = cs_get_user_team(id);
     
-    if(team == CS_TEAM_T && g_eCurModeInfo[m_TT_BlockWeapon] || team == CS_TEAM_CT && g_eCurModeInfo[m_CT_BlockWeapon]) {
+    if(team == CS_TEAM_T && CHECK_FLAGS(DRM_BLOCK_T_WEAPON)
+        || team == CS_TEAM_CT && CHECK_FLAGS(DRM_BLOCK_CT_WEAPON)) {
         return HAM_SUPERCEDE;
     }
     
@@ -369,7 +359,7 @@ public ham_player_spawn_post(id)
     
     new CsTeams:team = cs_get_user_team(id);
     
-    if(g_eCurModeInfo[m_Usp] && team == CS_TEAM_CT) {
+    if(CHECK_FLAGS(DRM_GIVE_USP) && team == CS_TEAM_CT) {
         give_item(id, "weapon_usp");
         cs_set_user_bpammo(id, CSW_USP, 100);
     }
@@ -394,11 +384,16 @@ public show__modes_menu(id)
     for(new i, item[2], len; i < g_iModesNum; i++) {
         ArrayGetArray(g_aModes, i, mode_info);
         
-        if(mode_info[m_Hide]) {
+        if(mode_info[m_Flags] & DRM_HIDE) {
             continue;
         }
         
-        len = formatex(text, charsmax(text), "%L", id, mode_info[m_Name]);
+        if(GetLangTransKey(mode_info[m_Name]) != TransKey_Bad) {
+            len = formatex(text, charsmax(text), "%L", id, mode_info[m_Name]);
+        } else {
+            len = formatex(text, charsmax(text), "%s", mode_info[m_Name]);
+        }
+        
         if(mode_info[m_CurDelay] > 0) {
             formatex(text[len], charsmax(text) - len, "[\r%d\d]", mode_info[m_CurDelay]);
         }
@@ -447,7 +442,12 @@ public modes_menu__handler(id, menu, item)
     
     remove_task(id + TASK_SHOWMENU);
     ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, id, mode + 1);
-    client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
+
+    if(GetLangTransKey(g_eCurModeInfo[m_Name]) != TransKey_Bad) {
+        client_print_color(0, print_team_red, "%s %L^4 %L^1.", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
+    } else {
+        client_print_color(0, print_team_red, "%s %L^4 %s^1.", PREFIX, LANG_PLAYER, "DRM_SELECTED_MODE", g_eCurModeInfo[m_Name]);
+    }
     
     menu_destroy(menu);
     return PLUGIN_HANDLED;
@@ -473,12 +473,12 @@ public task__menu_timer(id)
             do {
                 mode = random(g_iModesNum);
                 ArrayGetArray(g_aModes, mode, g_eCurModeInfo);
-            } while(g_eCurModeInfo[m_CurDelay] || g_eCurModeInfo[m_Hide]);
+            } while(g_eCurModeInfo[m_CurDelay] || CHECK_FLAGS(DRM_HIDE));
         } else {
             do {
                 mode = random(g_iModesNum);
                 ArrayGetArray(g_aModes, mode, g_eCurModeInfo);
-            } while(g_eCurModeInfo[m_Hide]);
+            } while(CHECK_FLAGS(DRM_HIDE));
         }
         
         g_iCurMode = mode;
@@ -492,7 +492,11 @@ public task__menu_timer(id)
         
         ExecuteForward(g_hForwards[SELECTED_MODE], g_fwReturn, id, mode + 1);
         
-        client_print_color(0, print_team_red, "%s %L", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
+        if(GetLangTransKey(g_eCurModeInfo[m_Name]) != TransKey_Bad) {
+            client_print_color(0, print_team_red, "%s %L^4 %L^1.", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", LANG_PLAYER, g_eCurModeInfo[m_Name]);
+        } else {
+            client_print_color(0, print_team_red, "%s %L^4 %s^1.", PREFIX, LANG_PLAYER, "DRM_RANDOM_MODE", g_eCurModeInfo[m_Name]);
+        }
     } else {
         show__modes_menu(id);
         set_task(1.0, "task__menu_timer", id + TASK_SHOWMENU);
@@ -501,7 +505,7 @@ public task__menu_timer(id)
 check_usp()
 {
     #if DEFAULT_USP < 1
-    if(g_eCurModeInfo[m_Usp]) {
+    if(CHECK_FLAGS(DRM_GIVE_USP)) {
         new player, players[32], pnum;
         get_players(players, pnum, "ae", "CT");
         for(new i = 0; i < pnum; i++) {
@@ -511,7 +515,7 @@ check_usp()
         }
     }
     #else
-    if(!g_eCurModeInfo[m_Usp]) {
+    if(!CHECK_FLAGS(DRM_GIVE_USP)) {
         new player, players[32], pnum;
         get_players(players, pnum, "ae", "CT");
         for(new i = 0; i < pnum; i++) {
@@ -527,7 +531,7 @@ bool:is_all_modes_blocked()
     new mode_info[ModeData];
     for(new i; i < g_iModesNum; i++) {
         ArrayGetArray(g_aModes, i, mode_info);
-        if(!mode_info[m_CurDelay] && !mode_info[m_Hide]) return false;
+        if(!mode_info[m_CurDelay] && !(mode_info[m_Flags] & DRM_HIDE)) return false;
     }
     return true;
 }
