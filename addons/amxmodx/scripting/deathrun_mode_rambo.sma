@@ -7,10 +7,14 @@
 #include <hamsandwich>
 #include <deathrun_modes>
 
+#if AMXX_VERSION_NUM < 183
+#define client_disconnected client_disconnect
+#endif
+
 #pragma semicolon 1
 
 #define PLUGIN "Deathrun Mode: Rambo"
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 #define AUTHOR "Mistrick"
 
 #define MIN_DIFF 8.0
@@ -54,19 +58,13 @@ public plugin_init()
     
     g_iModeRambo = dr_register_mode
     (
-        .Name = "DRM_MODE_RAMBO",
-        .Mark = "rambo",
-        .RoundDelay = 0,
-        .CT_BlockWeapons = 0,
-        .TT_BlockWeapons = 1,
-        .CT_BlockButtons = 0,
-        .TT_BlockButtons = 1,
-        .Bhop = 1,
-        .Usp = 1,
-        .Hide = 0
+        .name = "DRM_MODE_RAMBO",
+        .mark = "rambo",
+        .round_delay = 0,
+        .flags = DRM_BLOCK_T_WEAPON | DRM_BLOCK_T_BUTTONS | DRM_ALLOW_BHOP | DRM_GIVE_USP
     );
 }
-public client_disconnect(id)
+public client_disconnected(id)
 {
     remove_task(id + TASK_OVERHEAT_TICK);
 }

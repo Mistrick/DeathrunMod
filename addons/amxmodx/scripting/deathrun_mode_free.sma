@@ -4,7 +4,7 @@
 #include <deathrun_modes>
 
 #define PLUGIN "Deathrun Mode: Free"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -28,16 +28,10 @@ public plugin_init()
     
     g_iModeFree = dr_register_mode
     (
-        .Name = "DRM_MODE_FREE",
-        .Mark = "free",
-        .RoundDelay = 0,
-        .CT_BlockWeapons = 1,
-        .TT_BlockWeapons = 1,
-        .CT_BlockButtons = 0,
-        .TT_BlockButtons = 1,
-        .Bhop = 1,
-        .Usp = 0,
-        .Hide = 0
+        .name = "DRM_MODE_FREE",
+        .mark = "free",
+        .round_delay = 0,
+        .flags = DRM_BLOCK_CT_WEAPON | DRM_BLOCK_T_WEAPON | DRM_BLOCK_T_BUTTONS | DRM_ALLOW_BHOP
     );
     
     g_iMaxPlayers = get_maxplayers();

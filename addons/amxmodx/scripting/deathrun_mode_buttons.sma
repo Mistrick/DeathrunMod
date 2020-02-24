@@ -12,7 +12,7 @@
 #pragma semicolon 1
 
 #define PLUGIN "Deathrun Mode: Buttons"
-#define VERSION "1.0.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
@@ -32,16 +32,10 @@ public plugin_init()
     
     g_iModeButtons = dr_register_mode
     (
-        .Name = "DRM_MODE_BUTTONS",
-        .Mark = "buttons",
-        .RoundDelay = 0,
-        .CT_BlockWeapons = 0,
-        .TT_BlockWeapons = 0,
-        .CT_BlockButtons = 0,
-        .TT_BlockButtons = 0,
-        .Bhop = 1,
-        .Usp = 1,
-        .Hide = 0
+        .name = "DRM_MODE_BUTTONS",
+        .mark = "buttons",
+        .round_delay = 0,
+        .flags = DRM_ALLOW_BHOP | DRM_GIVE_USP
     );
 }
 public dr_selected_mode(id, mode)

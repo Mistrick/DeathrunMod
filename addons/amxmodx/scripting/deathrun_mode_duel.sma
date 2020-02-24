@@ -9,10 +9,11 @@
 
 #if AMXX_VERSION_NUM < 183
 #include <colorchat>
+#define client_disconnected client_disconnect
 #endif
 
 #define PLUGIN "Deathrun Mode: Duel"
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -25,16 +26,14 @@
 #define MAX_DISTANCE 1500
 #define MIN_DISTANCE 300
 
-enum CancelType
-{
+enum CancelType {
     CType_TimeOver,
     CType_PlayerDisconneced,
     CType_PlayerDied,
     CType_ModeChanged
 };
 
-enum (+=100)
-{
+enum (+=100) {
     TASK_TURNCHANGER = 100,
     TASK_PRESTART_TIMER,
     TASK_DUELTIMER
@@ -46,15 +45,13 @@ new const SPAWNS_DIR[] = "deathrun_duel";
 const XO_CBASEPLAYERWEAPON = 4;
 const m_pPlayer = 41;
 
-enum _:DUEL_FORWARDS
-{
+enum _:DUEL_FORWARDS {
     DUEL_PRESTART,
     DUEL_START,
     DUEL_FINISH,
     DUEL_CANCELED
 };
-enum
-{
+enum {
     DUELIST_CT = 0,
     DUELIST_T
 };
@@ -133,16 +130,10 @@ public plugin_init()
     
     g_iModeDuel = dr_register_mode
     (
-        .Name = "DRM_MODE_DUEL",
-        .Mark = "duel",
-        .RoundDelay = 0,
-        .CT_BlockWeapons = 1,
-        .TT_BlockWeapons = 1,
-        .CT_BlockButtons = 1,
-        .TT_BlockButtons = 1,
-        .Bhop = 0,
-        .Usp = 0,
-        .Hide = 1
+        .name = "DRM_MODE_DUEL",
+        .mark = "duel",
+        .round_delay = 0,
+        .flags = DRM_BLOCK_CT_WEAPON | DRM_BLOCK_T_WEAPON | DRM_BLOCK_CT_BUTTONS | DRM_BLOCK_T_BUTTONS | DRM_HIDE
     );
     
     Create_DuelMenu();
@@ -244,7 +235,7 @@ GetSpawnAngles()
     xs_vec_mul_scalar(fVector, -1.0, fVector);
     vector_to_angle(fVector, g_fDuelSpawnAngles[DUELIST_T]);
 }
-public client_disconnect(id)
+public client_disconnected(id)
 {
     if((g_bDuelStarted) && (id == g_iDuelPlayers[DUELIST_CT] || id == g_iDuelPlayers[DUELIST_T])) {
         ResetDuel();

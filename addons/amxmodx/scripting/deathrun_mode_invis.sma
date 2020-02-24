@@ -7,7 +7,7 @@
 #pragma semicolon 1
 
 #define PLUGIN "Deathrun Mode: Invis"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define AUTHOR "Mistrick"
 
 #define TERRORIST_HEALTH 150
@@ -21,16 +21,10 @@ public plugin_init()
     
     g_iModeInvis = dr_register_mode
     (
-        .Name = "DRM_MODE_INVIS",
-        .Mark = "invis",
-        .RoundDelay = 2,
-        .CT_BlockWeapons = 0,
-        .TT_BlockWeapons = 1,
-        .CT_BlockButtons = 0,
-        .TT_BlockButtons = 1,
-        .Bhop = 1,
-        .Usp = 1,
-        .Hide = 0
+        .name = "DRM_MODE_INVIS",
+        .mark = "invis",
+        .round_delay = 2,
+        .flags = DRM_BLOCK_T_WEAPON | DRM_BLOCK_T_BUTTONS | DRM_ALLOW_BHOP | DRM_GIVE_USP
     );
 }
 public Ham_PlayerSpawn_Post(id)

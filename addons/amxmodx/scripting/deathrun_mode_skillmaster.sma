@@ -13,22 +13,20 @@
 #pragma semicolon 1
 
 #define PLUGIN "Deathrun Mode: Skill Master"
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
 #define AUTHOR "Mistrick"
 
 #define IsPlayer(%1) (%1 && %1 <= g_iMaxPlayers)
 
 enum { NONE_MODE = 0 };
 
-enum SIcon_Status
-{
+enum SIcon_Status {
     SIcon_Hide,
     SIcon_Show,
     SIcon_Flash
 };
 
-enum Skills
-{
+enum Skills {
     SKILL_PLEASE_STOP,
     SKILL_BURN_BABY_BURN,
     SKILL_KICK_IN_THE_ASS
@@ -70,16 +68,10 @@ public plugin_init()
     
     g_iModeSkillMaster = dr_register_mode
     (
-        .Name = "DRM_MODE_SKILLMASTER",
-        .Mark = "skillmaster",
-        .RoundDelay = 0,
-        .CT_BlockWeapons = 0,
-        .TT_BlockWeapons = 0,
-        .CT_BlockButtons = 0,
-        .TT_BlockButtons = 1,
-        .Bhop = 1,
-        .Usp = 1,
-        .Hide = 0
+        .name = "DRM_MODE_SKILLMASTER",
+        .mark = "skillmaster",
+        .round_delay = 0,
+        .flags = DRM_BLOCK_T_BUTTONS | DRM_ALLOW_BHOP | DRM_GIVE_USP
     );
 }
 public dr_selected_mode(id, mode)
