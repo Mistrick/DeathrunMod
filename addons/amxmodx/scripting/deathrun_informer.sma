@@ -6,10 +6,11 @@
 #if AMXX_VERSION_NUM < 183
 #include <colorchat>
 #include <dhudmessage>
+#define client_disconnected client_disconnect
 #endif
 
 #define PLUGIN "Deathrun: Informer"
-#define VERSION "1.0"
+#define VERSION "1.0.1"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -21,8 +22,7 @@
 
 new const PREFIX[] = "^4[DRI]";
 
-enum (+=100)
-{
+enum (+=100) {
     TASK_FPSCOUNT = 100,
     TASK_INFORMER,
     TASK_SPEEDOMETER
@@ -31,6 +31,7 @@ enum (+=100)
 new g_szCurMode[32], g_iConnectedCount, g_iMaxPlayers, g_iHudInformer, g_iHudSpecList, g_iHudSpeed;
 new bool:g_bConnected[33], bool:g_bAlive[33], bool:g_bInformer[33], bool:g_bSpeed[33], bool:g_bSpecList[33];
 new g_iHealth[33], g_iMoney[33], g_iFrames[33], g_iPlayerFps[33];
+new bool:g_bLangMode;
 
 public plugin_init()
 {
@@ -70,7 +71,7 @@ public client_putinserver(id)
     g_bSpeed[id] = true;
     g_iConnectedCount++;
 }
-public client_disconnect(id)
+public client_disconnected(id)
 {
     g_bConnected[id] = false;
     g_bAlive[id] = false;
@@ -97,6 +98,7 @@ public Command_Speed(id)
 public Event_RoundStart()
 {
     dr_get_mode(g_szCurMode, charsmax(g_szCurMode));
+    g_bLangMode = GetLangTransKey(g_szCurMode) != TransKey_Bad;
 }
 public Event_Money(id)
 {
@@ -142,7 +144,11 @@ public Task_ShowInfo()
         if(!g_bConnected[id]) continue;
         
         if(g_bInformer[id]) {
-            iLen = formatex(szInformer, charsmax(szInformer), "%L: %L^n", id, "DRI_MODE", id, g_szCurMode);
+            if(g_bLangMode) {
+                iLen = formatex(szInformer, charsmax(szInformer), "%L: %L^n", id, "DRI_MODE", id, g_szCurMode);
+            } else {
+                iLen = formatex(szInformer, charsmax(szInformer), "%L: %s^n", id, "DRI_MODE", g_szCurMode);
+            }
             iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", id, "DRI_TIMELEFT", iTimeLeft / 60, iTimeLeft % 60);
             iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L^n", id, "DRI_ALIVECT", iAlive, iCount);
             iLen += formatex(szInformer[iLen], charsmax(szInformer) - iLen, "%L", id, "DRI_ALL_PLAYERS", g_iConnectedCount, g_iMaxPlayers);
@@ -210,6 +216,7 @@ public Task_ShowSpeed()
 public dr_selected_mode(id, mode)
 {
     dr_get_mode(g_szCurMode, charsmax(g_szCurMode));
+    g_bLangMode = GetLangTransKey(g_szCurMode) != TransKey_Bad;
 }
 stock get_ct(&alive, &count)
 {
