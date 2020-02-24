@@ -12,7 +12,7 @@
 #endif
 
 #define PLUGIN "Deathrun: Core"
-#define VERSION "1.1.5"
+#define VERSION "1.1.6"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -87,6 +87,7 @@ public plugin_init()
     
     register_message(g_msgVGUIMenu, "Message_Menu");
     register_message(g_msgShowMenu, "Message_Menu");
+    register_message(get_user_msgid("TextMsg"), "Message_TextMsg");
     
     DisableHamForward(g_iHamPreThink = RegisterHam(Ham_Player_PreThink, "player", "Ham_PlayerPreThink_Post", true));
     unregister_forward(FM_Spawn, g_iForwardSpawn, 0);
@@ -277,6 +278,27 @@ TerroristCheck()
         g_iTerrorist = pnum ? players[0] : 0;
     }
     ExecuteForward(g_iForwards[NEW_TERRORIST], g_iReturn, g_iTerrorist);
+}
+public Message_TextMsg(const msg, const dest, const id)
+{
+    enum {
+        arg_destination_type = 1,
+        arg_message
+    }
+    new dt = get_msg_arg_int(arg_destination_type);
+
+    if(dt != print_console) {
+        return PLUGIN_CONTINUE;
+    }
+
+    new message[16];
+    get_msg_arg_string(arg_message, message, charsmax(message));
+
+    if(equal(message, "#Game_scoring")) {
+        return PLUGIN_HANDLED;
+    }
+
+    return PLUGIN_CONTINUE;
 }
 //******** Messages Credits: PRoSToTeM@ ********//
 public Message_Menu(const msg, const dest, const id)
